@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - User Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style_admin.css">
+</head>
+<body>
+ <!-- Navbar -->
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <a class="navbar-brand" href="#">Admin Panel</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+              <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="#">Account</a></li>
+                <li class="nav-item"><a class="nav-link logout-btn" href="#">Logout</a></li>
+              </ul>
+            </div>
+        </nav>
+        
+            
+  
+    <h2 class="px-5 text-center mt-3"><strong>Order Details</strong></h2>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-7">
+                <div class="order-container mt-4">
+                    <h6 >Order #<%= allOrders.orderNumber || "N/A" %></h6>
+                    
+                    <div id="ordersHistory" class="order-container mt-4">
+                        <h5  class="mb-4">Order History</h5>
+                        <div class="order-card-details">
+                            <div class="order-header-details">
+                                <span>Order Number: <a href="/product/order/<%= allOrders._id %>"><%= allOrders.orderNumber %></a></span>
+                                <span>Order Date: <%= new Date(allOrders.orderDate).toLocaleDateString() %></span>
+                                <p>
+                                    <span>Total Price: ₹<%= allOrders.orderSummary.total.toFixed(2) %></span>
+                                    <span>Payment Method: <%= allOrders.paymentDetails?.method || "N/A" %></span>
+                                </p>
+                            </div>
+                            <div class="order-products-details col-md-8">
+                                <% allOrders.products.forEach((product, index) => { %>
+
+                                    
+
+                                    <div class="product-card-order <%= index >= 3 ? 'd-none extra-product' : '' %>">
+                                        <!-- Product Image --> 
+                                        <img src="<%= '/uploads/' + product.images.replace(/^uploads\\/, '').replace(/\\/g, '/').replace(/ /g, '%20') %>"> 
+                                        <!-- Product Details -->
+                                        <div class="product-details-order">
+                                            <% if (product.return_cancel.cancelRequested && !product.return_cancel.returnInitiated) { %>
+                                                <h6 style="color: red;">Return requested from user</h6>
+                                            <% } %>
+                                            <h6><%= product.name %></h6>
+                                            <p>Brand: <%= product.brand %></p>
+                                            <p>Size: <%= product.size %></p>
+                                            <p>Color: <%= product.color %></p>
+                                            <p>Quantity: <%= product.quantity %></p>
+                                            <p>Price: ₹<%= product.discountedPrice %> (Original: ₹<%= product.pricePerUnit %>)</p>
+                                            <p>Total Price: ₹<%= product.totalPrice %></p>
+                            
+                                            <!-- Order Status -->
+                                            <p style="font-weight: bold; color: <%= allOrders.status === 'Cancelled' ? 'red' : allOrders.status === 'Delivered' ? 'blue' : 'green' %>;">
+                                                Status: <%= product.productStatus %>
+                                            </p>
+                                            <% if (allOrders.status === "Pending" || allOrders.status === "Shipping") { %>
+                                                <p>Expected Delivery: <%= allOrders.expectedDeliveryDate ? new Date(allOrders.expectedDeliveryDate).toLocaleDateString() : "TBD" %></p>
+                                            <% } %>
+                            
+                                            <!-- Refund & Return Status -->
+                                            <% if (product.refundMessage) { %>
+                                                <p style="color: red;"><%= product.refundMessage %></p>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                            <!-- Show More / Show Less Button -->
+<% if (allOrders.products.length > 3) { %>
+    <div class="text-center mt-3">
+        <button id="toggleProductsOrder"class="btn btn-primary">Show More</button>
+    </div>
+<% } %>
+                
+                            <p style="font-weight: bold; margin-top: 10px;"><%= allOrders.orderStatusMessage %></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-5 mx-auto mt-5 p-5">
+                <div class=" card shadow-sm border-0 rounded-4 order-card-money">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-4"><strong>Order Summary</strong></h5>
+                        <p>Excluding cancelled products</p>
+                        <div class="row mb-4">
+                                <div class="price-details p-3 rounded-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Subtotal</span>
+                                        <span>₹<%= allOrders.orderSummary?.subtotal?.toFixed(2)|| "0.00" %></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Shipping Fee</span>
+                                        <span>₹<%= allOrders.orderSummary?.shippingFee || "0.00" %></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Discount</span>
+                                        <span class="text-danger">- ₹<%= allOrders.orderSummary?.discount || "0.00" %></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Coupon Applied</span>
+                                        <span class="text-success">- ₹<%= allOrders.orderSummary?.couponDiscount || "0.00" %></span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="fw-bold">Total Amount</span>
+                                        <span class="fw-bold fs-5 text-primary">₹<%= allOrders.orderSummary?.total?.toFixed(2) || "0.00" %></span>
+                                    </div>
+                                </div>
+                    
+                    </div>
+
+                        <div class="delivery-details p-2">
+                            <h5 class="mb-3">Delivery Address</h5>
+                            <p class="mb-1 fw-bold"><%= allOrders.address?.fullName %></p>
+                            <p class="mb-1"><%= allOrders.address?.houseName %></p>
+                            <p class="mb-1"> <%= allOrders.address?.city || "Unknown city" %></p>
+                            <p class="mb-1"><%= allOrders.address?.pin || "No ZIP" %></p>
+                            <p class="mb-3">India</p>
+                            
+                            <h5 class="mb-3">Payment Details</h5>
+                            <p class="mb-1 text-success">
+                                <i class="bi bi-credit-card me-2"></i>Payment Method: <strong><%= allOrders.paymentDetails?.method || "Not available" %></strong>
+                            </p>
+                            <% if (allOrders.paymentDetails?.transactionId) { %>
+                            <p class=" mb-0  text-success">Transaction ID: <strong><%= allOrders.paymentDetails.transactionId %></strong></p>
+                            <% } %>
+                            <h5 class="mt-3">Refund Details</h5>
+                            <% if (allOrders.totalRefundAmount > 0) { %>
+                                <p class="mb-1 text-success">
+                                    <i class="bi bi-arrow-repeat me-2"></i>Refund for Returned Products: <strong>₹<%= allOrders.totalRefundAmount.toFixed(2) %></strong>
+                                    <p>Refunded to: <strong class=" text-success">Wallet</strong></p>
+                                </p>
+                            <% } %>
+                        </div>
+            </div>
+        </div>
+    </div>
+      
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+        const toggleBtn = document.getElementById("toggleProductsOrder");
+        const extraProducts = document.querySelectorAll(".extra-product");
+        
+        if (toggleBtn) {
+            toggleBtn.addEventListener("click", function () {
+                extraProducts.forEach(product => product.classList.toggle("d-none"));
+                toggleBtn.textContent = toggleBtn.textContent === "Show More" ? "Show Less" : "Show More";
+            });
+        }
+    });
+
+    </script>

@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wardrobe</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Dancing+Script:wght@400;700&family=Montserrat:wght@400;700&family=Lora:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/style.css">
+  
+      
+     
+</head>
+
+<body>
+    <%- include('partials/navbar') %>
+    <div class="tracking-container">
+        <div class="tracking-line"></div>
+        <div class="progress-line" id="progress-line"></div>
+    
+        <div class="tracking-step">
+            <div class="step-circle" id="step-pending">1</div>
+            <div class="step-label">Pending</div>
+        </div>
+        <div class="tracking-step">
+            <div class="step-circle" id="step-shipped">2</div>
+            <div class="step-label">Shipped</div>
+        </div>
+        <div class="tracking-step">
+            <div class="step-circle" id="step-delivered">3</div>
+            <div class="step-label">Delivered</div>
+        </div>
+    </div> 
+    <h4 class="px-5"><strong>Order Details</strong></h4>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-7">
+                <div class="order-container mt-4">
+                    <h6>Order #<%= allOrders.orderNumber || "N/A" %></h6>
+                    
+                   <% if(allOrders.status === "Delivered"||(allOrders.status==="Shipped"||allOrders.status==='Pending'&& allOrders.paymentDetails.method!='COD')&& allOrders.flag== 'false'){%>
+                    <a href="/product/invoice/<%= allOrders._id %>" class="btn btn-primary">
+                        View Invoice
+                    </a>
+                   <%}%>
+                    <div id="ordersHistory" class="order-container mt-4">
+                        <h5>Order History</h5>
+                        <div class="order-card-details">
+                            <div class="order-header-details">
+                                <span>Order Number: <a href="/product/order/<%= allOrders._id %>"><%= allOrders.orderNumber %></a></span>
+                                <span>Order Date: <%= new Date(allOrders.orderDate).toLocaleDateString() %></span>
+                                <p>
+                                    <span>Total Price: ₹<%= allOrders.orderSummary.total.toFixed(2) %></span>
+                                    <span>Payment Method: <%= allOrders.paymentDetails?.method || "N/A" %></span>
+                                </p>
+                            </div>
+                            <div class="order-products-details col-md-8">
+                                <% allOrders.products.forEach((product, index) => { %>
+                                    <div class="product-card-order <%= index >= 3 ? 'd-none extra-product' : '' %>">
+                                        <!-- Product Image --> 
+                                        <img src="<%= '/uploads/' + product.images.replace(/^uploads\\/, '').replace(/\\/g, '/').replace(/ /g, '%20') %>"> 
+                                        <!-- Product Details -->
+                                        <div class="product-details-order">
+                                            <h6><%= product.name %></h6>
+                                            <p>Brand: <%= product.brand %></p>
+                                            <p>Size: <%= product.size %></p>
+                                            <p>Color: <%= product.color %></p>
+                                            <p>Quantity: <%= product.quantity %></p>
+                                            <p>Price: ₹<%= product.discountedPrice %> (Original: ₹<%= product.pricePerUnit %>)</p>
+                                            <p>Total Price: ₹<%= product.totalPrice %></p>
+                            
+                                            <!-- Order Status -->
+                                            <p style="font-weight: bold; color: <%= allOrders.status === 'Cancelled' ? 'red' : allOrders.status === 'Delivered' ? 'blue' : 'green' %>;">
+                                                Status: <%= product.productStatus %>
+                                            </p>
+                                            <% if (allOrders.status === "Pending" || allOrders.status === "Shipping") { %>
+                                                <p>Expected Delivery: <%= allOrders.expectedDeliveryDate ? new Date(allOrders.expectedDeliveryDate).toLocaleDateString() : "TBD" %></p>
+                                            <% } %>
+                            
+                                            <!-- Refund & Return Status -->
+                                            <% if (product.refundMessage) { %>
+                                                <p style="color: red;"><%= product.refundMessage %></p>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                            <!-- Show More / Show Less Button -->
+<% if (allOrders.products.length > 3) { %>
+    <div class="text-center mt-3">
+        <button id="toggleProductsOrder">Show More</button>
+    </div>
+<% } %>
+                
+                            <p style="font-weight: bold; margin-top: 10px;"><%= allOrders.orderStatusMessage %></p>
+                        </div>
+                    </div>
+                </div>
+                <% if (allOrders.status === "Delivered" && allOrders.flag== 'false') { %>
+                    <button id="returnProductBtn" class="btn btn-primary mt-3" data-order-id="<%= allOrders._id %>">
+                        Return Product
+                    </button>   
+                <% } else if (allOrders.status === "Pending") { %>
+                    <button id="cancelOrderBtn" class="btn btn-danger mt-3" data-order-id="<%= allOrders._id %>">
+                        Cancel Order
+                    </button>
+                    <button id="cancelProductBtn" class="btn btn-warning mt-3" data-order-id="<%= allOrders._id %>">
+                        Cancel Product
+                    </button>
+                <% } %>
+            </div>
+
+            <div class="col-md-5 mx-auto mt-5 p-5">
+                <div class=" card shadow-sm border-0 rounded-4 order-card-money">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-4"><strong>Order Summary</strong></h5>
+                        <div class="row mb-4">
+                                <div class="price-details p-3 rounded-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Subtotal</span>
+                                        <span>₹<%= allOrders.orderSummary?.subtotal?.toFixed(2)|| "0.00" %></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Shipping Fee</span>
+                                        <span>₹<%= allOrders.orderSummary?.shippingFee || "0.00" %></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Discount</span>
+                                        <span class="text-danger">- ₹<%= allOrders.orderSummary?.discount || "0.00" %></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Coupon Applied</span>
+                                        <span class="text-success">- ₹<%= allOrders.orderSummary?.couponDiscount || "0.00" %></span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="fw-bold">Total Amount</span>
+                                        <span class="fw-bold fs-5 text-primary">₹<%= allOrders.orderSummary?.total?.toFixed(2) || "0.00" %></span>
+                                    </div>
+                                </div>
+                    
+                    </div>
+
+                        <div class="delivery-details p-2">
+                            <h5 class="mb-3">Delivery Address</h5>
+                            <p class="mb-1 fw-bold"><%= allOrders.address?.fullName %></p>
+                            <p class="mb-1"><%= allOrders.address?.houseName %></p>
+                            <p class="mb-1"> <%= allOrders.address?.city || "Unknown city" %></p>
+                            <p class="mb-1"><%= allOrders.address?.pin || "No ZIP" %></p>
+                            <p class="mb-3">India</p>
+                            
+                            <h5 class="mb-3">Payment Details</h5>
+                            <p class="mb-1 text-success">
+                                <i class="bi bi-credit-card me-2"></i>Payment Method: <strong><%= allOrders.paymentDetails?.method || "Not available" %></strong>
+                            </p>
+                            <% if (allOrders.paymentDetails?.transactionId) { %>
+                            <p class=" mb-0  text-success">Transaction ID: <strong><%= allOrders.paymentDetails.transactionId %></strong></p>
+                            <% } %>
+                            <h5 class="mt-3">Refund Details</h5>
+                            <% if (allOrders.totalRefundAmount > 0) { %>
+                                <p class="mb-1 text-success">
+                                    <i class="bi bi-arrow-repeat me-2"></i>Refund for Returned Products: <strong>₹<%= allOrders.totalRefundAmount.toFixed(2) %></strong>
+                                    <p>Refunded to: <strong class=" text-success">Wallet</strong></p>
+                                </p>
+                            <% } %>
+                        </div>
+            </div>
+        </div>
+    </div>
+    
+    
+    
+    
+       
+
+   <!-- Cancel Product Modal -->
+<!-- Cancel Product Modal -->
+<div id="cancelProductModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancel Product(s)</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="cancelProductForm">
+                    <% allOrders.products.forEach((product) => { 
+                        if (!(product.isDelete === true && product.refundGivenMethod === "Wallet" && product.refundSuccess === true)) { 
+                    %>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="cancelProductIds" value="<%= product.productid %>">
+                            <label class="form-check-label">
+                                <%= product.name %> (Color: <%= product.color %>, Size: <%= product.size %>)
+                            </label>
+                        </div>
+                    <% } }); %>
+                    <input type="hidden" name="orderId" value="<%= allOrders._id %>">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" id="confirmCancelProduct">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Return Product Modal -->
+<div id="selectReturnProductModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Return Product(s)</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="ReturnProductForm">
+                    <% if (!allOrders.refund) {  
+                        let returnableProducts = allOrders.products.filter(product => 
+                            !( 
+                                product.return_cancel?.cancelRequested || 
+                                product.return_cancel?.returnRequested || 
+                                product.return_cancel?.returnStatus === "Accepted" || 
+                                product.isDelete || 
+                                product.refundSuccess // Ensure refunded products are excluded
+                            )
+                        );
+                    
+                        if (returnableProducts.length > 0) {
+                            returnableProducts.forEach((product) => { %>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="ReturnProductIds" value="<%= product.productid %>">
+                                    <label class="form-check-label">
+                                        <%= product.name %> (Color: <%= product.color %>, Size: <%= product.size %>)
+                                    </label>
+                                </div>
+                            <% });
+                        } else { %>
+                            <p class="text-center text-muted">No products available for return.</p>
+                        <% }
+                    } else { %>
+                        <p class="text-center text-muted">No products available for return.</p>
+                    <% } %>
+                    
+                
+                    <input type="hidden" name="orderId" value="<%= allOrders._id %>">
+                </form>
+                
+                
+                
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" id="confirmReturnProduct">Confirm to Return</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal for Selecting Return Reason -->
+<div id="returnReasonModal" class="modal">
+    <div class="modal-content">
+        <h4>Select a Reason for Return</h4>
+        <form id="returnReasonForm">
+            <select id="returnReason">
+                <option value="Damaged">Damaged Product</option>
+                <option value="Wrong Item">Received Wrong Item</option>
+                <option value="Not Needed">No Longer Needed</option>
+                <option value="Other">Other</option>
+            </select>
+            <button type="button" id="confirmReturnBtn" class="btn btn-success">Yes, I want to return</button>
+        </form>
+    </div>
+</div>
+
+
+  
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Bootstrap JavaScript (Required for Modal Functionality) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function showMore() {
+    document.getElementById("moreProducts").style.display = "flex";
+    document.getElementById("showMoreBtn").style.display = "none";
+    document.getElementById("showLessBtn").style.display = "inline-block";
+}
+
+function showLess() {
+    document.getElementById("moreProducts").style.display = "none";
+    document.getElementById("showMoreBtn").style.display = "inline-block";
+    document.getElementById("showLessBtn").style.display = "none";
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    // Event delegation for Cancel Order button
+    document.body.addEventListener("click", async function (event) {
+        if (event.target && event.target.id === "cancelOrderBtn") {
+            const orderId = event.target.getAttribute("data-order-id");
+            console.log("Order ID before sending request:", orderId);
+
+            // Step 1: Ask for cancellation confirmation
+            const confirmCancel = await Swal.fire({
+                title: "Are you sure?",
+                text: "Do you really want to cancel this order?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Yes, cancel it!"
+            });
+
+            if (!confirmCancel.isConfirmed) return; // Exit if user cancels
+
+            try {
+                // Step 2: Fetch order details to check payment method
+                const response = await fetch(`/product/order-details/${orderId}`);
+                const data = await response.json();
+
+                if (!data.order || !data.order.paymentDetails || !data.order.paymentDetails.method) {
+                    console.error("Missing payment details in response.");
+                    return;
+                }
+
+                let refundMethod = null;
+                if (["Wallet", "card", "upi"].includes(data.order.paymentDetails.method)) {
+                    // Step 3: Ask for refund method
+                    const { value: selectedMethod } = await Swal.fire({
+                        title: "Choose Refund Method",
+                        input: "radio",
+                        inputOptions: {
+                            Wallet: "Refund to Wallet",
+                            Bank: "Refund to Bank (For Card/UPI Payments)"
+                        },
+                        inputValidator: value => {
+                            if (!value) {
+                                return "You need to choose a refund method!";
+                            }
+                        }
+                    });
+
+                    if (!selectedMethod) return; // Exit if no method chosen
+                    refundMethod = selectedMethod;
+                }
+
+                // Step 4: Proceed with order cancellation
+                const cancelResponse = await fetch(`/product/cancel-order/${orderId}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ orderId, refundMethod }) // Send refund method
+                });
+
+                let result;
+try {
+    result = await cancelResponse.json();
+} catch (jsonError) {
+    console.error("Error parsing JSON:", jsonError);
+    return Swal.fire({
+        title: "Oops!",
+        text: "Server error! Please try again.",
+        icon: "error",
+        confirmButtonColor: "#d33"
+    });
+}
+
+// Fix: Check if result.success exists
+if (result && result.success) {
+    document.getElementById("orderStatus").innerText = "Cancelled";
+    event.target.style.display = "none";
+
+    Swal.fire({
+        title: "Cancelled!",
+        text: "Your order has been cancelled.",
+        icon: "success",
+        confirmButtonColor: "#3085d6"
+    }).then(() => {
+        window.location.href = result.redirectUrl;
+    });
+} else {
+    console.error("Error response from server:", result);
+    Swal.fire({
+        title: "Error!",
+        text: result.message || "Unexpected error occurred.",
+        icon: "error",
+        confirmButtonColor: "#d33"
+    });
+}
+            } catch (error) {
+                console.error("Error:", error);
+                Swal.fire({
+                    title: "Oops!",
+                    text: "Something went wrong!",
+                    icon: "error",
+                    confirmButtonColor: "#d33"
+                });
+            }
+        }
+    });
+
+
+
+    // Event delegation for Cancel Product button
+    document.body.addEventListener("click", function (event) {
+        if (event.target && event.target.id === "cancelProductBtn") {
+            var modal = new bootstrap.Modal(document.getElementById("cancelProductModal"));
+            modal.show();
+        }
+    });
+    document.body.addEventListener("click", function (event) {
+    if (event.target && event.target.id === "confirmCancelProduct") {
+        const selectedProductIds = Array.from(document.querySelectorAll('input[name="cancelProductIds"]:checked'))
+            .map(input => input.value);
+
+        if (selectedProductIds.length === 0) {
+            Swal.fire({
+                icon: "warning",
+                title: "No Product Selected",
+                text: "Please select at least one product to cancel.",
+            });
+            return;
+        }
+
+        const orderId = document.querySelector('input[name="orderId"]').value;
+
+        fetch(`/product/order-details/${orderId}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log("Order Data:", data); // Debugging
+
+                if (!data.order || !data.order.paymentDetails || !data.order.paymentDetails.method) {
+                    console.error("Missing payment details in response.");
+                    return;
+                }
+
+                if (["Wallet", "card", "upi"].includes(data.order.paymentDetails.method)) {
+                    Swal.fire({
+                        title: "Choose Refund Method",
+                        input: "radio",
+                        inputOptions: {
+                            Wallet: "Refund to Wallet",
+                            Bank: "Refund to Bank (For Card/UPI Payments)"
+                        },
+                        inputValidator: value => {
+                            if (!value) {
+                                return "You need to choose a refund method!";
+                            }
+                        }
+                    }).then(result => {
+                        if (result.isConfirmed) {
+                            initiateCancel(selectedProductIds, orderId, result.value);
+                        }
+                    });
+                } else {
+                    initiateCancel(selectedProductIds, orderId);
+                }
+            })
+            .catch(error => console.error("Error fetching order:", error));
+    }
+});
+
+// Move this function **outside** the event listener to fix syntax issues
+function initiateCancel(productIds, orderId, refundMethod = null) {
+    fetch('/product/cancel-product', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, productIds, refundMethod })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: "success",
+                title: "Products Canceled",
+                text: "Selected products have been canceled successfully!",
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: "error",
+                title: "Cancellation Failed",
+                text: "Error canceling products. Please try again.",
+            });
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        Swal.fire({
+            icon: "error",
+            title: "Unexpected Error",
+            text: "Something went wrong. Please try again later.",
+        });
+    });
+}
+
+    // Event delegation for Close modal buttons
+    document.body.addEventListener("click", function (event) {
+        if (event.target.classList.contains("modal-close-btn")) {
+            var modal = document.getElementById("cancelProductModal");
+            var bootstrapModal = bootstrap.Modal.getInstance(modal);
+            bootstrapModal.hide();
+        }
+    });
+
+    // Event delegation for Return Product button
+    document.body.addEventListener("click", function (event) {
+        if (event.target && event.target.id === "returnProductBtn") {
+            var modal1 = new bootstrap.Modal(document.getElementById("selectReturnProductModal"));
+            modal1.show();
+        }
+    });
+
+    // Move to Reason Selection Modal
+    document.body.addEventListener("click", function (event) {
+    // Step 1: Open the reason selection modal when "Confirm to Return" is clicked
+    if (event.target && event.target.id === "confirmReturnProduct") {
+        var selectedProducts = document.querySelectorAll('input[name="ReturnProductIds"]:checked');
+
+        if (selectedProducts.length === 0) {
+            Swal.fire({
+                icon: "warning",
+                title: "No products chosen!",
+                text: "Please select at least one product before proceeding.",
+                confirmButtonText: "OK"
+            });
+            return; // Stop execution to prevent modal from opening
+        }
+
+        // If at least one product is selected, open the reason selection modal
+        var reasonModal = new bootstrap.Modal(document.getElementById("returnReasonModal"));
+        reasonModal.show();
+    }
+
+    // Step 2: Handle reason selection and show refund method selection
+    if (event.target && event.target.id === "confirmReturnBtn") {
+        const selectedProducts = Array.from(document.querySelectorAll('input[name="ReturnProductIds"]:checked'))
+            .map(input => input.value);
+        const returnReason = document.getElementById("returnReason")?.value;
+        const orderId = document.querySelector('input[name="orderId"]')?.value;
+
+        if (!returnReason) {
+            Swal.fire({
+                icon: "warning",
+                title: "Reason Required",
+                text: "Please provide a reason for return.",
+            });
+            return;
+        }
+
+        // Hide the reason modal
+        var reasonModal = bootstrap.Modal.getInstance(document.getElementById("returnReasonModal"));
+        if (reasonModal) reasonModal.hide();
+
+        // Step 3: Ask for refund method
+        Swal.fire({
+            title: "Select Refund Method",
+            text: "Choose where you want the refund to be processed.",
+            icon: "question",
+            showDenyButton: true,
+            showCancelButton: true,
+            confirmButtonText: "Wallet",
+            denyButtonText: "Bank",
+            cancelButtonText: "Cancel"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                processReturn(orderId, selectedProducts, returnReason, "Wallet");
+            } else if (result.isDenied) {
+                processReturn(orderId, selectedProducts, returnReason, "Bank");
+            }
+        });
+    }
+});
+
+// Function to handle the return request
+function processReturn(orderId, selectedProducts, returnReason, refundMethod) {
+    console.log("Order ID:", orderId);
+    console.log("Selected Products:", selectedProducts);
+    console.log("Return Reason:", returnReason);
+    console.log("Refund Method:", refundMethod);
+
+    fetch("/product/request-return", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            orderId: orderId,
+            products: selectedProducts,
+            reason: returnReason,
+            refundMethod: refundMethod
+        }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("Response from backend:", data); // Log response
+        if (data.success) {
+            Swal.fire({
+                icon: "success",
+                title: "Return Submitted!",
+                text: "Your return request has been successfully submitted.",
+            }).then(() => {
+                document.getElementById("returnProductBtn").style.display = "none";
+                document.getElementById("returnMessage").innerText =
+                    "Return request initiated. Check the return page for status and updates.";
+                document.getElementById("returnMessage").style.display = "block";
+                window.location.reload();
+                setTimeout(() => {
+                    window.location.href = "/product/orders";
+                    window.location.reload();
+                }, 500);
+            });
+        } else {
+            Swal.fire({
+                icon: "error",
+                title: "Submission Failed",
+                text: "Failed to submit return request. Please try again later.",
+            });
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        Swal.fire({
+            icon: "error",
+            title: "Unexpected Error",
+            text: "Something went wrong. Please try again later.",
+        });
+    });
+}
+
+});
+
+    function updateTracking(status) {
+        let progressWidth = 0;
+
+        if (status === "Pending") {
+            document.getElementById("step-pending").classList.add("active");
+            progressWidth = "0%";
+        } 
+        else if (status === "Shipped") {
+            document.getElementById("step-pending").classList.add("active", "completed");
+            document.getElementById("step-shipped").classList.add("active");
+            progressWidth = "50%";
+        } 
+        else if (status === "Delivered") {
+            document.getElementById("step-pending").classList.add("active", "completed");
+            document.getElementById("step-shipped").classList.add("active", "completed");
+            document.getElementById("step-delivered").classList.add("active");
+            progressWidth = "100%";
+        }
+
+        document.getElementById("progress-line").style.width = progressWidth;
+    }
+
+    const status = "<%= allOrders.status %>"; 
+    updateTracking(status);
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const toggleBtn = document.getElementById("toggleProductsOrder");
+        const extraProducts = document.querySelectorAll(".extra-product");
+        
+        if (toggleBtn) {
+            toggleBtn.addEventListener("click", function () {
+                extraProducts.forEach(product => product.classList.toggle("d-none"));
+                toggleBtn.textContent = toggleBtn.textContent === "Show More" ? "Show Less" : "Show More";
+            });
+        }
+    });
+
+</script>
+</body>

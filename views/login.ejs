@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wardrobe</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+ 
+</head>
+
+<body>
+  <%- include('partials/navbar') %>
+  
+  <div class="container p-4 " id="mainLogin">
+    <div class="auth-buttons">
+      <button id="loginBtn" class="active">LOGIN</button>
+      <button id="registerBtn">REGISTER</button>
+    </div>
+
+    <div id="loginForm" class="card p-4 mx-auto ">
+      <div class="social-buttons d-flex justify-content-center gap-3 mt-3">
+        <!-- Google Box -->
+        <div class="social-box google d-flex align-items-center justify-content-center">
+          <img src="https://cdn2.hubspot.net/hubfs/53/image8-2.jpg" alt="Google" class="logo"><a href="/auth/google">
+            <span>Sign up with Google</span></a>
+        </div>
+        <!-- Facebook Box -->
+        <!--<div class="social-box facebook d-flex align-items-center justify-content-center">
+          <img
+            src="https://e7.pngegg.com/pngimages/174/233/png-clipart-computer-icons-facebook-inc-social-media-logo-facebook-rectangle-logo-thumbnail.png"
+            alt="Facebook" class="logo">
+          <span>Facebook</span>
+        </div>-->
+      </div>
+      <div class="or-divider">OR</div>
+      <form action="/login" method="post" id="submitLogin" onsubmit="return validateForm()">
+        <div class="mb-3">
+          <label for="loginemail" class="form-label text-white">Email</label>
+          <input type="text" class="form-control custom-input" id="loginemail" name="emailId" 
+                 onfocus="clearMsg(this)" onblur="validateField(this, 'emailError')">
+          <small class="error-text text-danger d-none" id="emailError">Email is required.</small>
+        </div> 
+
+        <div class="mb-3">
+          <label for="loginPassword" class="form-label text-white">Password</label>
+          <div class="position-relative">
+            <input type="password" class="form-control custom-input" id="loginPassword" name="password" onfocus="clearMsg(this)" onblur="validateField(this, 'passwordError')">
+            <span id="togglePassword">
+              <i class="fa fa-eye"></i>
+          </span>
+          </div>           
+          <small class="error-text text-danger d-none" id="passwordError">Password is required.</small>
+      </div>
+      
+        <div class="forgot-password">
+          <a href="/forgot_password" class="text-decoration-none text-white">Forgot Password?</a>
+        </div>
+    
+        <% if (typeof error !== "undefined") { %>
+          <p id="errorMsg" style="color: rgb(247, 242, 242)"><%= error %></p>
+          <script>
+            setTimeout(() => {
+              const errorMsg = document.getElementById("errorMsg");
+              if (errorMsg) {
+                errorMsg.style.display = "none";
+              }
+            }, 3000); 
+          </script>
+        <% } %>
+        
+      
+            <div class="or-divider">OR</div>
+            <p class="text-center text-white" id="usePhoneLink">Use phone number instead</p>
+            <button type="submit" class="btn submitbutton w-50">Login</button>
+      </form>
+    </div>
+    <!-- Register Form -->
+    <div id="registerForm" class="card p-4 mx-auto d-none">
+      <form id="registerFormElement" action="/register" method="POST">
+        <div class="form-group">
+          <input type="text" class="custom-register" id="firstname" name="fname" placeholder=" ">
+          <label for="firstname">First Name</label>
+          <span class="error-message" id="firstNameError"></span>
+        </div>
+        <div class="form-group">
+          <input type="text" id="lastname"  class="custom-register" name="lname" placeholder=" " >
+          <label for="lastname">Last Name</label>
+          <span class="error-message" id="lastNameError"></span>
+        </div>
+        <div class="form-group">
+          <input type="email" id="emailid"  class="custom-register" name="emailId"  placeholder=" ">
+          <label for="email">Email</label>
+          <span class="error-message" id="emailError"></span>
+        </div>
+        <div class="form-group">
+          <input type="password" id="password"  class="custom-register" name="password" placeholder=" ">
+          <label for="password">Password</label>
+          <ul id="password-requirements" class="password-requirements">
+            <li class="uppercase">At least 1 uppercase letter</li>
+            <li class="number">At least 1 number</li>
+            <li class="special">At least 1 special character</li>
+            <li class="length">Maximum 8 characters</li>
+          </ul>
+          <span class="error-message" id="passwordError"></span>
+        </div>
+        <div class="form-group">
+          <input type="password" id="confirmPassword" class="custom-register"  name="hashedPassword" placeholder=" ">
+          <label for="confirmPassword">Confirm Password</label>
+          <span class="error-message" id="confirmPasswordError"></span>
+        </div>
+        <div class="form-group">
+          <input type="text" id="phone"  class="custom-register" name="phoneNumber"  placeholder=" ">
+          <label for="phone">Phone Number</label>
+          <span class="error-message" id="phoneError"></span>
+        </div>
+        <div class="form-group">
+          <input type="date" id="birthday"  class="custom-register" name="birthDate"  placeholder=" ">
+          <label for="birthday">Birthday</label>
+          <span class="error-message" id="birthdayError"></span>
+        </div>
+        <button type="submit" class="btn btn-danger w-100" id="register">Register</button>
+      </form>
+    </div>
+  </div>
+  <!-- Phone Login Section -->
+  
+  <div class="card p-4 mx-auto d-none" id="phoneLogin">
+    <div class="or-divider">Login with Phone number</div>
+    <form id="otpForm">
+      <!-- Phone Number Input -->
+      <div class="mb-3">
+        <label for="loginphoneNum" class="form-label">Phone Number</label>
+        <input type="text" class="form-control custom-input" id="loginphoneNum"  required>
+      </div>
+      <div class="or-divider">OR</div>
+      <p class="text-center text-white" id="useEmailLink">Use email instead</p>
+      <button type="button" class="btn submitbutton w-50" id="requestOtpButton">Request OTP</button>
+      
+
+      <p id="otpFeedback" class="text-center mt-3"></p>
+      <div id="otpSection" class="mt-4 hidden">
+        <label class="form-label d-block text-center">Enter OTP</label>
+        <div class="d-flex justify-content-center otp-inputs">
+          <input type="text" maxlength="1" class="otpfill" id="otp1">
+          <input type="text" maxlength="1" class="otpfill" id="otp2">
+          <input type="text" maxlength="1" class="otpfill" id="otp3">
+          <input type="text" maxlength="1" class="otpfill" id="otp4">
+          <input type="text" maxlength="1" class="otpfill" id="otp5">
+          <input type="text" maxlength="1" class="otpfill" id="otp6">
+        </div>
+      </div>
+      <p class="resend-timer hidden">Timer: <span id="timer">0:30</span></p>
+      
+      <button type="button" class="btn submitbutton w-50 mt-4  hidden" id="loginphoneButton">Login</button>
+    </form>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorMsg = urlParams.get("error");
+    const successMsg = urlParams.get("success");
+    const successMessage = localStorage.getItem("successMessage");
+    
+    if (successMessage) {
+        Swal.fire({
+            icon: "success",
+            title: "Success!",
+            text: successMessage,
+            confirmButtonColor: "#28a745",
+            customClass: {
+            popup: "custom-swal-popup",  // Custom class for the popup
+            confirmButton: "custom-ok-button", // Custom class for the OK button
+            icon: "custom-icon" // Custom class for the icon
+      }
+        });
+
+        // Remove the message from localStorage after displaying it
+        localStorage.removeItem("successMessage");
+    }
+
+    if (errorMsg) {
+    Swal.fire({
+      icon: "error",
+      title: "Oops...",
+      text: errorMsg,
+      confirmButtonColor: "#d33",
+      customClass: {
+        popup: "custom-swal-popup",  // Custom class for the popup
+        confirmButton: "custom-ok-button", // Custom class for the OK button
+        icon: "custom-icon" // Custom class for the icon
+      }
+    });
+  }
+  if (successMsg) {
+    Swal.fire({
+      icon: "success",
+      title: "Yay!!",
+      text: successMsg,
+      confirmButtonColor: "#d33",
+      customClass: {
+        popup: "custom-swal-popup",  // Custom class for the popup
+        confirmButton: "custom-ok-button", // Custom class for the OK button
+        icon: "custom-icon" // Custom class for the icon
+      }
+    });
+  }
+
+
+    
+});
+
+    document.addEventListener("DOMContentLoaded", function () {
+    const togglePassword = document.getElementById("togglePassword");
+    const passwordField = document.getElementById("loginPassword");
+    const icon = togglePassword.querySelector("i"); // Target the icon inside the span
+
+    togglePassword.addEventListener("click", function () {
+        if (passwordField.type === "password") {
+            passwordField.type = "text";
+            icon.classList.replace("fa-eye", "fa-eye-slash"); // Change icon
+        } else {
+            passwordField.type = "password";
+            icon.classList.replace("fa-eye-slash", "fa-eye"); // Change icon back
+        }
+    });
+});
+    document.addEventListener("DOMContentLoaded", () => {
+      const passwordInput = document.getElementById("password");
+      const requirementsList = document.getElementById("password-requirements");
+
+      passwordInput.addEventListener("input", () => {
+        const password = passwordInput.value;
+
+        const requirements = requirementsList.querySelectorAll("li");
+
+        requirements.forEach((requirement) => {
+          if (requirement.classList.contains("uppercase")) {
+            if (/[A-Z]/.test(password)) {
+              requirement.innerHTML = "Must contain an uppercase letter <span style='color: green;'>&#10003;</span>";
+            } else {
+              requirement.innerHTML = "Must contain an uppercase letter";
+            }
+          }
+          if (requirement.classList.contains("number")) {
+            if (/\d/.test(password)) {
+              requirement.innerHTML = "Must contain a number <span style='color: green;'>&#10003;</span>";
+            } else {
+              requirement.innerHTML = "Must contain a number";
+            }
+          }
+          if (requirement.classList.contains("special")) {
+            if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+              requirement.innerHTML = "Must contain a special character (!@#$%^&*) <span style='color: green;'>&#10003;</span>";
+            } else {
+              requirement.innerHTML = "Must contain a special character (!@#$%^&*)";
+            }
+          }
+          if (requirement.classList.contains("length")) {
+            if (password.length >= 8) {
+              requirement.innerHTML = "Must be at least 8 characters long <span style='color: green;'>&#10003;</span>";
+            } else {
+              requirement.innerHTML = "Must be at least 8 characters long";
+            }
+          }
+        });
+      });
+    });
+    document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("registerFormElement");
+
+    // Form fields
+    const firstName = document.getElementById("firstname");
+    const lastName = document.getElementById("lastname");
+    const email = document.getElementById("emailid");
+    const password = document.getElementById("password");
+    const confirmPassword = document.getElementById("confirmPassword");
+    const phone = document.getElementById("phone");
+    const birthday = document.getElementById("birthday");
+
+    // Error message elements
+    const firstNameError = document.getElementById("firstNameError");
+    const lastNameError = document.getElementById("lastNameError");
+    const emailError = document.getElementById("emailError");
+    const passwordError = document.getElementById("passwordError");
+    const confirmPasswordError = document.getElementById("confirmPasswordError");
+    const phoneError = document.getElementById("phoneError");
+    const birthdayError = document.getElementById("birthdayError");
+
+    // Helper function to show an error message
+    function showError(input, errorElement, message) {
+        if (!input.value.trim()) {
+            errorElement.textContent = message;
+            errorElement.style.display = "block";
+            return true;
+        } else {
+            errorElement.style.display = "none";
+            return false;
+        }
+    }
+
+    // Validate email format
+    function validateEmail() {
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email.value.match(emailPattern)) {
+            emailError.textContent = "Invalid email format";
+            emailError.style.display = "block";
+            return false;
+        } else {
+            emailError.style.display = "none";
+            return true;
+        }
+    }
+
+    // Validate password complexity
+    function validatePassword() {
+        const passwordValue = password.value;
+        let errors = [];
+
+        if (!/[A-Z]/.test(passwordValue)) {
+            errors.push("At least one uppercase letter required");
+        }
+        if (!/\d/.test(passwordValue)) {
+            errors.push("At least one number required");
+        }
+        if (!/[!@#$%^&*(),.?":{}|<>]/.test(passwordValue)) {
+            errors.push("At least one special character required");
+        }
+        if (passwordValue.length < 8) {
+            errors.push("Password must be at least 8 characters long");
+        }
+
+        if (errors.length > 0) {
+            passwordError.innerHTML = errors.join("<br>");
+            passwordError.style.display = "block";
+            return false;
+        } else {
+            passwordError.style.display = "none";
+            return true;
+        }
+    }
+
+    // Validate if passwords match
+    function validateConfirmPassword() {
+        if (password.value !== confirmPassword.value) {
+            confirmPasswordError.textContent = "Passwords do not match";
+            confirmPasswordError.style.display = "block";
+            return false;
+        } else {
+            confirmPasswordError.style.display = "none";
+            return true;
+        }
+    }
+
+    // Attach real-time validation (on blur)
+    firstName.addEventListener("blur", () => showError(firstName, firstNameError, "First name is required"));
+    lastName.addEventListener("blur", () => showError(lastName, lastNameError, "Last name is required"));
+    email.addEventListener("blur", validateEmail);
+    password.addEventListener("blur", validatePassword);
+    confirmPassword.addEventListener("blur", validateConfirmPassword);
+    phone.addEventListener("blur", () => showError(phone, phoneError, "Phone number is required"));
+    birthday.addEventListener("blur", () => showError(birthday, birthdayError, "Birthday is required"));
+
+    // Form submit event
+    form.addEventListener("submit", (event) => {
+        let hasError = false;
+
+        // Run all validations
+        if (showError(firstName, firstNameError, "First name is required")) hasError = true;
+        if (showError(lastName, lastNameError, "Last name is required")) hasError = true;
+        if (!validateEmail()) hasError = true;
+        if (!validatePassword()) hasError = true;
+        if (!validateConfirmPassword()) hasError = true;
+        if (showError(phone, phoneError, "Phone number is required")) hasError = true;
+        if (showError(birthday, birthdayError, "Birthday is required")) hasError = true;
+
+        // Prevent form submission if any error exists
+        if (hasError) {
+            event.preventDefault();
+        }
+    });
+});
+
+
+   
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const inputs = document.querySelectorAll(".otpfill");
+
+      inputs.forEach((input, index) => {
+        input.addEventListener("input", (event) => {
+          if (event.inputType === "deleteContentBackward" && index > 0) {
+            inputs[index - 1].focus(); // Move back on delete
+          } else if (input.value !== "" && index < inputs.length - 1) {
+            inputs[index + 1].focus(); // Move forward on input
+          }
+        });
+
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "Backspace" && index > 0 && input.value === "") {
+            inputs[index - 1].focus(); // Move back on empty delete
+          }
+        });
+      });
+    });
+
+    // Initialize all tooltips
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    // Toggle between Login and Register forms
+    document.addEventListener("DOMContentLoaded", () => {
+    const loginBtn = document.getElementById('loginBtn');
+    const registerBtn = document.getElementById('registerBtn');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const mainLogin = document.getElementById('mainLogin');
+    const phoneLogin = document.getElementById('phoneLogin');
+    const phoneSignIn = document.getElementById('usePhoneLink');
+    const loginphoneButton = document.getElementById('loginphoneButton');
+    const useEmailLink = document.getElementById("useEmailLink");
+    const authButtons = document.querySelector(".auth-buttons");
+
+    // Ensure elements exist before adding event listeners
+    if (phoneSignIn && phoneLogin && loginForm) {
+        phoneSignIn.addEventListener("click", (event) => {
+            event.preventDefault(); // Prevent default link behavior
+            loginForm.classList.add("d-none");  // Hide email login form
+            phoneLogin.classList.remove("d-none");  // Show phone login form
+            if (authButtons) authButtons.classList.remove("d-none"); // Ensure auth buttons are shown
+        });
+    }
+
+    if (useEmailLink && mainLogin && phoneLogin && loginForm) {
+        useEmailLink.addEventListener("click", (event) => {
+            event.preventDefault();
+            mainLogin.classList.remove("d-none");
+            phoneLogin.classList.add("d-none");
+            loginForm.classList.remove("d-none");
+        });
+    }
+
+    // Function to update history and show correct form
+    function navigateToPage(page) {
+        if (!loginForm || !registerForm || !loginBtn || !registerBtn) return; // Ensure elements exist
+
+        if (page === "login") {
+            loginForm.action = "/login";
+            window.history.pushState({ page: "login" }, "", "/login"); // Change URL without refresh
+            loginForm.classList.remove("d-none");
+            registerForm.classList.add("d-none");
+            loginBtn.classList.add("active");
+            registerBtn.classList.remove("active");
+        } else if (page === "register") {
+            registerForm.action = "/register";
+            window.history.pushState({ page: "register" }, "", "/register"); // Change URL without refresh
+            registerForm.classList.remove("d-none");
+            loginForm.classList.add("d-none");
+            registerBtn.classList.add("active");
+            loginBtn.classList.remove("active");
+        }
+    }
+
+    // Handle clicks on login and register buttons
+    if (loginBtn) {
+        loginBtn.addEventListener("click", (event) => {
+            event.preventDefault(); // Prevent unwanted page reload
+            navigateToPage("login");
+        });
+    }
+
+    if (registerBtn) {
+        registerBtn.addEventListener("click", (event) => {
+            event.preventDefault(); // Prevent unwanted page reload
+            navigateToPage("register");
+        });
+    }
+
+    // Ensure navigation from /forgot-password goes correctly
+    const currentPath = window.location.pathname;
+    if (currentPath === "/forgot_password") {
+        if (loginBtn) {
+            loginBtn.addEventListener("click", (event) => {
+                event.preventDefault();
+                navigateToPage("login");
+            });
+        }
+
+        if (registerBtn) {
+            registerBtn.addEventListener("click", (event) => {
+                event.preventDefault();
+                navigateToPage("register");
+            });
+        }
+    }
+
+    // Handle back/forward navigation
+    window.onpopstate = function (event) {
+        if (event.state) {
+            navigateToPage(event.state.page);
+        }
+    };
+});
+
+
+document.getElementById("requestOtpButton").addEventListener("click", function () {
+        document.getElementById("otpSection").classList.remove("hidden");
+        document.querySelector(".resend-timer").classList.remove("hidden");
+        document.getElementById("loginphoneButton").classList.remove("hidden");
+    });
+
+    const timerDisplay = document.getElementById('timer');
+    let countdown = null; // Variable to store the countdown interval
+
+    function startTimer() {
+      let timeLeft = 30; // 30 seconds countdown
+      timerDisplay.textContent = `0:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+
+      requestOtpButton.disabled = true; // Disable "Resend OTP" button
+
+      // Clear any existing timer to avoid conflicts
+      if (countdown) clearInterval(countdown);
+
+      // Start the countdown
+      countdown = setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = `0:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+        if (timeLeft <= 0) {
+          clearInterval(countdown); // Stop the timer
+          countdown = null; // Reset the countdown
+          requestOtpButton.disabled = false; // Enable "Resend OTP" button
+        }
+      }, 1000);
+    }
+
+    // Request OTP Button Handler
+    const requestOtpButton = document.getElementById('requestOtpButton');
+    const otpFeedback = document.getElementById('otpFeedback');
+    const otpSection = document.getElementById('otpSection');
+
+    requestOtpButton.addEventListener('click', async () => {
+      const phoneNumber = document.getElementById('loginphoneNum').value.trim();
+      otpFeedback.style.display = 'none';
+
+      try {
+        // Mock API Call to Send OTP
+        const response = await fetch('/send-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: phoneNumber }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          otpFeedback.textContent = "OTP sent successfully!";
+          otpFeedback.style.color = "green";
+          otpFeedback.style.display = 'block';
+          otpSection.style.display = 'block';
+
+          // Start the timer after successful OTP request
+          startTimer();
+        } else {
+          otpFeedback.textContent = data.error || "Failed to send OTP.";
+          otpFeedback.style.color = "red";
+          otpFeedback.style.display = 'block';
+        }
+      } catch (err) {
+        otpFeedback.textContent = "Error: Unable to send OTP.";
+        otpFeedback.style.color = "red";
+        otpFeedback.style.display = 'block';
+      }
+    });
+
+    loginphoneButton.addEventListener('click', async () => {
+      event.preventDefault();
+  const phoneNumber = document.getElementById('loginphoneNum').value.trim();
+
+  // Get OTP from individual input fields
+  const otpInputs = document.querySelectorAll('.otpfill');
+  let enteredOtp = '';
+  otpInputs.forEach(input => {
+    enteredOtp += input.value.trim();
+  });
+
+  otpFeedback.style.display = 'none';
+
+  try {
+    // Ensure OTP has 6 digits before sending request
+    if (enteredOtp.length !== 6 || isNaN(enteredOtp)) {
+      otpFeedback.textContent = "Please enter a valid 6-digit OTP.";
+      otpFeedback.style.color = "red";
+      otpFeedback.style.display = 'block';
+      return;
+    }
+
+    // API Call to Verify OTP
+    const response = await fetch('/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: phoneNumber, otp: enteredOtp }), 
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.success) {
+      otpFeedback.textContent = "Login successful!";
+      otpFeedback.style.color = "green";
+      otpFeedback.style.display = 'block';
+      sessionStorage.setItem("isLoggedIn", "true");
+
+            // Redirect to home page
+      window.location.replace(data.redirectUrl);
+
+      // Redirect to home page after a slight delay
+      setTimeout(() => {
+        window.history.replaceState(null, null, data.redirectUrl);
+      }, 100);
+    } else {
+      otpFeedback.textContent = data.error || "Invalid OTP. Please try again.";
+      otpFeedback.style.color = "yellow";
+      otpFeedback.style.display = 'block';
+    }
+  } catch (err) {
+    otpFeedback.textContent = "Error: Unable to verify OTP.";
+    otpFeedback.style.color = "yellow";
+    otpFeedback.style.display = 'block';
+  }
+});
+// Prevent Back Navigation After Login
+window.onload = function () {
+    if (sessionStorage.getItem("isLoggedIn")) {
+        window.history.replaceState(null, null, window.location.href);
+        window.addEventListener("popstate", function () {
+            window.history.replaceState(null, null, window.location.href);
+        });
+    }
+};
+
+    document.getElementById('category-btn').addEventListener('click', function () {
+      const categoryList = document.getElementById('category-list');
+      categoryList.classList.toggle('d-none');
+    });
+
+    const profileHover = document.querySelector('.profile-hover');
+    profileHover.addEventListener('mouseover', () => {
+      profileHover.querySelector('.profile-options').classList.remove('d-none');
+    });
+    profileHover.addEventListener('mouseleave', () => {
+      profileHover.querySelector('.profile-options').classList.add('d-none');
+    });
+
+    //email verification
+    // Request OTP Button Handler
+
+    document.addEventListener("DOMContentLoaded", function () {
+      document.getElementById("registerFormElement").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const userData = {
+          fname: document.getElementById("firstname").value,
+          lname: document.getElementById("lastname").value,
+          emailId: document.getElementById("email").value,
+          password: document.getElementById("password").value,
+          phoneNumber: document.getElementById("phone").value,
+          birthDate: document.getElementById("birthday").value,
+          source: "register",
+        };
+        sessionStorage.setItem("emailId", userData.emailId);
+        try {
+          const response = await fetch("/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(userData),
+          });
+
+        
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Something went wrong. Please try again.");
+        }
+      });
+    });
+
+    function validateForm() {
+  const emailError = document.getElementById("emailError");
+  const passwordError = document.getElementById("passwordError");
+  const loginEmail = document.getElementById("loginemail").value.trim();
+  const password = document.getElementById("loginPassword").value.trim();
+
+  emailError.classList.add("d-none");
+  passwordError.classList.add("d-none");
+
+  let valid = true;
+
+  if (!loginEmail) {
+    emailError.classList.remove("d-none");
+    valid = false;
+  }
+  if (!password) {
+    passwordError.classList.remove("d-none");
+    valid = false;
+  }
+
+  return valid;
+}
+
+// Show error only when leaving the field empty
+function validateField(input, errorId) {
+  const errorElement = document.getElementById(errorId);
+  if (input.value.trim() === "") {
+    errorElement.classList.remove("d-none");
+  }
+}
+
+// Clear error message when user starts typing
+function clearMsg(input) {
+  const errorElement = input.parentElement.querySelector(".error-text");
+  if (errorElement) {
+    errorElement.classList.add("d-none");
+  }
+}
+window.onload = function () {
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+        window.addEventListener("popstate", function () {
+            window.history.replaceState(null, null, window.location.href);
+        });
+    }
+};
+  </script>
+   <script src="/js/main.js"></script>
+</body>
+
+</html>

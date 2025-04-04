@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wardrobe</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Dancing+Script:wght@400;700&family=Montserrat:wght@400;700&family=Lora:wght@400;700&display=swap" rel="stylesheet">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+
+  <link rel="stylesheet" href="/css/style.css">
+  
+</head>
+
+<body>
+  
+  <%- include('partials/navbar') %>
+  <div class="container mt-4">
+    <div class="row profile-wrapper">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-12 mb-3">
+            <div class="sidebar p-3 border rounded">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link-profile">Edit profile</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/product/orders" class="nav-link-profile">Order history</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/refer" class="nav-link-profile">Refer and Earn</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/wallet" class="nav-link-profile">Wallet</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/product/return/returnsPage" class="nav-link-profile">Return or Exchange</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/contact" class="nav-link-profile">Contact us</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/logout" class="nav-link-profile">Log out</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/delete-account" class="nav-link-profile">Delete account</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        
+        <!-- Main Profile Section -->
+        <div class="col-md-9 col-12">
+            <div class="profile-container p-4 border rounded">
+                <h3>Profile</h3>
+                
+                <!-- Profile Picture Section -->
+                <div class="d-flex flex-column align-items-center justify-content-center text-center">
+                    <!-- Profile Picture Preview -->
+                    <div class="profile-pic" id="profilePicDisplay"
+                    style="background-image: url('<%= user.profilePic ? user.profilePic : '' %>');">
+                    <% if (!user.profilePic) { %> 
+                        <span id="profileInitial">
+                            <%= user.fname ? user.fname[0].toUpperCase() : 'U' %>
+                        </span>
+                    <% } %>
+                    </div>
+        
+                    <!-- Hidden File Input -->
+                    <input type="file" id="profilePicInput" class="profile-pic-upload d-none" accept="image/*">
+                    <div class="d-flex justify-content-center gap-2 mt-3 ">
+                       <!-- Button to Open File Input -->
+                    <button class="btn btn-light btn-sm" onclick="document.getElementById('profilePicInput').click();">
+                        Change
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="removeProfilePic();">
+                        Remove
+                    </button>
+                     </div>
+                    
+                </div>
+
+                <!-- Profile Form (Now inside .profile-container) -->
+                <form id="editProfileForm">
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label>First Name</label>
+                            <input type="text" name="fname" class="form-control profilepage" value="<%= user.fname %>" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Last Name</label>
+                            <input type="text" name="lname" class="form-control profilepage" value="<%= user.lname %>" readonly>
+                        </div>
+                        <div class="col-md-6 mt-4">
+                            <label>Email</label>
+                            <input type="email" name="emailId" class="form-control profilepage" value="<%= user.emailId %>" readonly>
+                        </div>
+                        <div class="col-md-6 mt-4">
+                            <label>Phone Number</label>
+                            <input type="text" name="phoneNumber" class="form-control profilepage" value="<%= user.phoneNumber %>" readonly>
+                        </div>
+                        <div class="col-md-6 mt-4">
+                            <label>Birth Date</label>
+                            <input type="date" id="birthDate" name="birthDate" class="form-control profilepage" value="<%= user.birthDate %>" readonly>
+                        </div>
+                
+                        <h6 class="mt-4">Address</h6>
+                        <div class="form-check d-flex align-items-center">
+                            <input class="form-check-input me-2" type="radio" name="addressType" id="homeAddress" value="home" checked onclick="toggleAddress('home')">
+                            <label class="form-check-label me-3" for="homeAddress">Home</label>
+                        
+                            <input class="form-check-input ms-3 me-2" type="radio" name="addressType" id="workAddress" value="work" onclick="toggleAddress('work')">
+                            <label class="form-check-label" for="workAddress">Work</label>
+                        </div>
+                        
+                        
+                        <div class="col-md-6 mt-4" id="homeAddressFields">
+                            <label>Home Address</label>
+                            <textarea name="homeAddress" class="form-control profilepage addressBox d-block" rows="5" readonly>
+                                <%= homeAddress.houseName %>, <%= homeAddress.street %>, <%= homeAddress.city %>, 
+                                <%= homeAddress.state %>, <%= homeAddress.country %> - <%= homeAddress.pin %>
+                            </textarea>
+                        </div>
+                
+                        <div class="col-md-6 mt-4" id="workAddressFields" style="display: none;">
+                            <label>Work Address</label>
+                            <textarea name="workAddress" class="form-control profilepage addressBox d-block" rows="5" readonly>
+                                <%= workAddress.houseName %>, <%= workAddress.street %>, <%= workAddress.city %>,
+                                <%= workAddress.state %>, <%= workAddress.country %> - <%= workAddress.pin %>
+                            </textarea>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#editModal">
+                        Edit
+                    </button>
+                </form> 
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Modal for Cropping -->
+<div class="modal fade" id="cropModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Crop Your Photo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <img id="cropImage" class="w-100">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="cropAndSave">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">Edit Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>First Name</label>
+                            <input type="text" id="modalFname" class="form-control profilepage" value="<%= user.fname %>">
+                        </div>
+                        <div class="col-md-6">
+                            <label>Last Name</label>
+                            <input type="text" id="modalLname" class="form-control profilepage" value="<%= user.lname %>">
+                        </div>
+                        <div class="col-md-6 mt-4">
+                            <label>Email</label>
+                            <input type="email" id="modalEmail" class="form-control profilepage" value="<%= user.emailId %>">
+                        </div>
+                        <div class="col-md-6 mt-4">
+                            <label>Phone Number</label>
+                            <input type="text" id="modalPhone" class="form-control profilepage" value="<%= user.phoneNumber %>">
+                        </div>
+                        <div class="col-md-6 mt-4">
+                            <label>Birth Date</label>
+                            <input type="date" id="modalBirthDate" class="form-control profilepage" value="<%= user.birthDate %>">
+                        </div>
+
+                        <h6 class="mt-4">Address</h6>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="modalAddressType" id="modalHomeAddress" value="home" checked onclick="toggleAddress('home')">
+                            <label class="form-check-label" for="modalHomeAddress">Home</label>
+
+                            <input class="form-check-input ms-3" type="radio" name="modalAddressType" id="modalWorkAddress" value="work" onclick="toggleAddress('work')">
+                            <label class="form-check-label" for="modalWorkAddress">Work</label>
+                        </div>
+
+                        <!-- Home Address Fields -->
+                        <div id="modalHomeAddressFields">
+                            <div class="mt-2">
+                                <label>House Name</label>
+                                <input type="text" id="modalHomeHouse" class="form-control profilepage" value="<%= homeAddress.houseName %>">
+                            </div>
+                            <div class="mt-2">
+                                <label>City</label>
+                                <input type="text" id="modalHomeCity" class="form-control profilepage" value="<%= homeAddress.city %>">
+                            </div>
+                            <div class="mt-2">
+                                <label>Street</label>
+                                <input type="text" id="modalHomeStreet" class="form-control profilepage" value="<%= homeAddress.street %>">
+                            </div>
+                            <div class="mt-2">
+                                <label>Postal Code</label>
+                                <input type="text" id="modalHomePin" class="form-control profilepage" value="<%= homeAddress.pin %>">
+                            </div>
+                            <div class="mt-2">
+                                <label>State</label>
+                                <input type="text" id="modalHomeState" class="form-control profilepage" value="<%= homeAddress.state %>">
+                            </div>
+                            <div class="mt-2">
+                                <label>Country</label>
+                                <input type="text" id="modalHomeCountry" class="form-control profilepage" value="<%= homeAddress.country %>">
+                            </div>
+                            <div class="mt-2">
+                                <label>Landmark (Optional)</label>
+                                <input type="text" id="modalHomeLandmark" class="form-control profilepage" value="<%= homeAddress.landmark %>">
+                            </div>
+                        </div>
+
+                        <!-- Work Address Fields (Initially Hidden) -->
+                        <div id="modalWorkAddressFields" style="display: none;">
+                            <div class="mt-2">
+                                <label>Work place</label>
+                                <input type="text" id="modalWorkHouse" class="form-control profilepage" value="<%= workAddress.houseName || '' %>">
+                            </div>
+                            <div class="mt-2">
+                                <label>City</label>
+                                <input type="text" id="modalWorkCity" class="form-control profilepage" value="<%= workAddress.city || '' %>">
+                            </div>
+                            <div class="mt-2">
+                                <label>Street</label>
+                                <input type="text" id="modalWorkStreet" class="form-control profilepage" value="<%= workAddress.street || '' %>">
+                            </div>
+                            <div class="mt-2">
+                                <label>Postal Code</label>
+                                <input type="text" id="modalWorkPin" class="form-control profilepage" value="<%= workAddress.pin || '' %>">
+                            </div>
+                            <div class="mt-2">
+                                <label>State</label>
+                                <input type="text" id="modalWorkState" class="form-control profilepage" value="<%= workAddress.state || '' %>">
+                            </div>
+                            <div class="mt-2">
+                                <label>Country</label>
+                                <input type="text" id="modalWorkCountry" class="form-control profilepage" value="<%= workAddress.country || '' %>">
+                            </div>
+                            <div class="mt-2">
+                                <label>Landmark (Optional)</label>
+                                <input type="text" id="modalWorkLandmark" class="form-control profilepage" value="<%= workAddress.landmark || '' %>">
+                            </div>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+<script>
+   
+
+   document.getElementById("profilePicInput").addEventListener("change", function (event) {
+    const file = event.target.files[0];
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const imageElement = document.getElementById("cropImage");
+            imageElement.src = e.target.result; // Set image in the modal
+
+            // Show the modal
+            new bootstrap.Modal(document.getElementById("cropModal")).show();
+
+            // Initialize Cropper.js
+            if (window.cropper) {
+                window.cropper.destroy(); // Destroy existing Cropper instance
+            }
+            window.cropper = new Cropper(imageElement, {
+                aspectRatio: 1, 
+                viewMode: 1,
+                dragMode: "move",
+                autoCropArea: 1,
+                cropBoxResizable: false,
+                cropBoxMovable: false,
+                ready() {
+        // Make the crop area circular using CSS
+        document.querySelector(".cropper-view-box").style.borderRadius = "50%";
+        document.querySelector(".cropper-face").style.borderRadius = "50%";
+    }
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// SAVE CROPPED IMAGE TO DATABASE
+document.getElementById("cropAndSave").addEventListener("click", function () {
+    if (!window.cropper) return;
+
+    const canvas = window.cropper.getCroppedCanvas({
+        width: 300,
+        height: 300
+    });
+
+    // Convert canvas to Blob
+    canvas.toBlob((blob) => {
+        const formData = new FormData();
+        formData.append("profilePic", blob, "profile-pic.png"); // Append Blob as File
+
+        // Send FormData to Backend
+        fetch(`/updateProfilePic/<%= user._id %>`, {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            Swal.fire(data.message);
+            window.location.reload();
+        })
+        .catch(error => console.error("Error:", error));
+    }, "image/png");
+
+    // Hide the modal
+    bootstrap.Modal.getInstance(document.getElementById("cropModal")).hide();
+});
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+        let birthDate = "<%= user.birthDate ? user.birthDate.toISOString().split('T')[0] : '' %>"; 
+        document.getElementById("birthDate").value = birthDate;
+        document.getElementById("modalBirthDate").value = birthDate;
+        
+    });
+function toggleAddress(type) {
+    if (type === 'home') {
+        document.getElementById('homeAddressFields').style.display = 'block';
+        document.getElementById('workAddressFields').style.display = 'none';
+        document.getElementById('modalHomeAddressFields').style.display = 'block';
+        document.getElementById('modalWorkAddressFields').style.display = 'none';
+        } 
+            
+    else {
+        document.getElementById('homeAddressFields').style.display = 'none';
+        document.getElementById('workAddressFields').style.display = 'block';
+        document.getElementById('modalHomeAddressFields').style.display = 'none';
+        document.getElementById('modalWorkAddressFields').style.display = 'block';
+    }
+}
+document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("save").addEventListener("click", async () => {
+        try {
+            const userEmailResponse = await fetch("/get-user-email");
+            const userEmailData = await userEmailResponse.json();
+            const storedEmail = userEmailData.emailId;
+
+            const userData = {
+                fname: document.getElementById("modalFname").value,
+                lname: document.getElementById("modalLname").value,
+                emailId: document.getElementById("modalEmail").value.trim(), 
+                phoneNumber: document.getElementById("modalPhone").value,
+                birthDate: document.getElementById("modalBirthDate").value,
+                addressType: document.querySelector('input[name="modalAddressType"]:checked')?.value,
+                homeAddress: {
+                    houseName: document.getElementById("modalHomeHouse").value,
+                    city: document.getElementById("modalHomeCity").value,
+                    street: document.getElementById("modalHomeStreet").value,
+                    pin: document.getElementById("modalHomePin").value,
+                    state: document.getElementById("modalHomeState").value,
+                    country: document.getElementById("modalHomeCountry").value,
+                    landmark: document.getElementById("modalHomeLandmark").value
+                },
+                workAddress: {
+                    houseName: document.getElementById("modalWorkHouse").value,
+                    city: document.getElementById("modalWorkCity").value,
+                    street: document.getElementById("modalWorkStreet").value,
+                    pin: document.getElementById("modalWorkPin").value,
+                    state: document.getElementById("modalWorkState").value,
+                    country: document.getElementById("modalWorkCountry").value,
+                    landmark: document.getElementById("modalWorkLandmark").value
+                },
+                source: "profile"
+            };
+
+            if (!userData.emailId) {
+                return Swal.fire("Error", "Email cannot be empty!", "error");
+            }
+
+            sessionStorage.setItem("emailId", userData.emailId);
+
+            if (userData.emailId !== storedEmail) {
+                Swal.fire({
+                    title: "Email Changed",
+                    text: "Email verification is required. Proceed to verify?",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonText: "Yes, verify email",
+                    cancelButtonText: "No, cancel"
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        const checkResponse = await fetch("/check-email-change", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ emailId: userData.emailId }),
+                        });
+
+                        const checkResult = await checkResponse.json();
+
+                        if (checkResult.success) {
+                            sessionStorage.setItem("pendingProfileUpdate", JSON.stringify(userData));
+                            window.location.href = checkResult.redirectUrl;
+                        } else {
+                            Swal.fire("Error", checkResult.message, "error");
+                        }
+                    }
+                });
+            } else {
+                const updateResponse = await fetch("/update-profile", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(userData)
+                });
+
+                const updateResult = await updateResponse.json();
+                if (updateResult.returnToCart) {
+                    Swal.fire({
+                        title: "Address Added!",
+                        text: "Click here to return to the cart.",
+                        icon: "success",
+                        confirmButtonText: "Go to Cart"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = "/product/cartpage"; 
+                        }
+                    });
+                } else {
+                    Swal.fire("Success", "Profile updated successfully!", "success")
+                        .then(() => window.location.href = "/profile");
+                }
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            window.location.href = "/profile";
+        }
+    });
+});
+document.querySelectorAll('.nav-link-profile').forEach(item => {
+        item.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default anchor behavior
+            document.querySelectorAll('.nav-link-profile').forEach(link => link.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    function removeProfilePic() {
+    const userId = "<%= user._id %>"; // Get the user ID dynamically (if using EJS)
+
+    fetch(`/remove-profile-pic/${userId}`, {
+
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById("profilePicDisplay").style.backgroundImage = "none";
+            document.getElementById("profileInitial").style.display = "block"; // Show the initial letter
+        } else {
+            Swal.fire("Error removing profile picture");
+        }
+    })
+    .catch(error => console.error("Error:", error));
+}
+
+
+</script>
+
+</body>
+</html>

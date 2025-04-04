@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wardrobe</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Dancing+Script:wght@400;700&family=Montserrat:wght@400;700&family=Lora:wght@400;700&display=swap" rel="stylesheet">
+
+
+  <link rel="stylesheet" href="/css/style.css">
+
+      
+</head>
+
+</head>
+
+<body>
+  
+    <%- include('partials/navbar') %>
+    <div class="cart-container container mt-5">
+        <% if (cart && cart.items.length > 0) { %>
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="address-container">
+                        <h5>Delivery Address</h5>
+                        <% if (address && Object.keys(address).length > 0 && isAddressValid) { %> 
+                            <div class="address-box">
+                                <p><strong><%= address.type %> Address</strong></p>
+                                <p><%= address.houseName%>, <%= address.street %>, <%= address.city %></p>
+                                <p><%= address.state %>, <%= address.pin %>, <%= address.country %></p>
+                                <button id="change-address-btn" class="btn btn-danger mt-2 cart-btn cart-button">Change</button>
+                                <button id="add-address-btn" class="btn btn-danger mt-2 cart-btn cart-button">Add/Edit Address</button>
+                            </div>
+                        <% } else { %>
+                            <button id="add-address-btn" class="btn btn-danger mt-2 cart-btn cart-button">Add/Edit Address</button>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+             <!-- Address Selection Modal -->
+        <div id="addressModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Select Address</h3>
+                <% allAddresses.forEach(addr => { %>
+                    <div class="address-option">
+                        <input type="radio" name="selectedAddress" value="<%= addr._id %>" 
+                               <%= address && address._id.toString() === addr._id.toString() ? "checked" : "" %>>
+                        <label>
+                            <strong><%= addr.type %> Address</strong><br>
+                            <%= addr.houseName %>, <%= addr.street %>, <%= addr.city %><br>
+                            <%= addr.state %>, <%= addr.pin %>, <%= addr.country %>
+                        </label>
+                    </div>
+                <% }) %>
+        
+                <button id="confirm-address-btn" class="btn btn-success">Confirm</button>
+            </div>
+        </div>
+        <% } %>
+       
+    </div>
+
+
+
+  <div class="cart-container container mt-5">
+    <div class="row">
+        <!-- Cart Items -->
+        <div class="col-lg-7">
+            <h4 class="mb-3">Shopping Cart</h4>
+            <% if (cart && cart.items.length > 0) { %>
+                <% cart.items.forEach(item => { %>
+                    <div class="cart-card card mb-3">
+                        <div class="row g-0">
+                            <div class="col-md-3">
+                                <a href="/product/<%= item.productid %>">
+                                    <img src="<%= '/uploads/' + item.image.replace(/^uploads\\/, '').replace(/\\/g, '/').replace(/ /g, '%20') %>" 
+                                         class="img-fluid rounded-start" 
+                                         alt="Product Image">
+                                </a>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="position-relative">
+                                    <% if (item.stock === 0) { %>
+                                        <div class="out-of-stock-overlay">
+                                            <p class="out-of-stock-text">Out of stock</p>
+                                            <div class="cart-item" data-productid="<%= item.productid ? item.productid : item._id %>">
+                                                <button class="btn btn-danger mt-2 cart-btn-remove cart-button" data-productid="<%= item.productid ? item.productid : item._id %>">
+                                                    Remove
+                                                </button>
+                                                <button class="btn btn-danger mt-2 cart-btn-wish cart-button" data-productid="<%= item.productid ? item.productid : item._id %>">
+                                                    Move to Wishlist
+                                                </button>
+                                            </div>
+                                           </div>
+                                    <% } %>
+                    
+                                    <div class="card-body <%= item.stock === 0 ? 'blurred' : '' %>">
+                                        <h5 class="cart-card-title card-title"><%= item.productName %></h5>
+                                        <p class="text-muted">Brand: <%= item.brand %></p>
+                                        <p class="cart-p"><%= item.description %></p>
+                                        <p class="productPerUnitDetail">(₹<%= item.pricePerUnit %>/unit)</p>
+                                        <p class="cart-p">
+                                            <span id="discountedprice-<%= item._id %>" class="productPriceDetail"> ₹<%= item.discountedPrice %>&nbsp;</span>
+                                            <span id="price-<%= item._id %>" class="productDiscountPriceDetail"> ₹<%= item.totalPrice %>&nbsp;</span>
+                                            <span class="productDiscountDetail">(<%= item.finalDiscount %>% OFF)</span>
+                                        </p>
+                    
+                                        <% if (item.stock > 0) { %>
+                                            <label class="cartDropdown" for="size-<%= item._id %>">Size:</label>
+                                            <select id="size-<%= item._id %>" class="form-select cart-form" name="size">
+                                                <% item.availableSizes.forEach(size => { %>
+                                                    <option value="<%= size %>" <%= size === item.size ? 'selected' : '' %>><%= size %></option>
+                                                <% }); %>
+                                            </select>
+                    
+                                            <label class="cartDropdown" for="color-<%= item._id %>">Color:</label>
+                                            <select id="color-<%= item._id %>" class="form-select cart-form" name="color">
+                                                <% item.availableColors.forEach(color => { %>
+                                                    <option value="<%= color %>" <%= color === item.color ? 'selected' : '' %>><%= color %></option>
+                                                <% }); %>
+                                            </select>
+                    
+                                            <label class="cartDropdown" for="quantity-<%= item._id %>">Quantity:</label>
+                                            <select id="quantity-<%= item._id %>" class="form-select cart-form" name="quantity">
+                                                <% for (let i = 1; i <= Math.min(10, item.stock); i++) { %>
+                                                    <option value="<%= i %>" <%= i === item.quantity ? 'selected' : '' %>><%= i %></option>
+                                                <% } %>
+                                            </select>
+                                        <% } %>
+                    
+                                        <p id="stock-<%= item._id %>">
+                                            <%= item.stock > 1 ? `In stock: ${item.stock}` : item.stock === 1 ? "Only 1 left!" : '<span class="text-danger">Out of stock</span>' %>
+                                        </p>
+                    
+                                        <div class="cart-item" data-productid="<%= item.productid ? item.productid : item._id %>">
+                                            <button class="btn btn-danger mt-2 cart-btn-remove cart-button" data-productid="<%= item.productid ? item.productid : item._id %>">
+                                                Remove
+                                            </button>
+                                            <button class="btn btn-danger mt-2 cart-btn-wish cart-button" data-productid="<%= item.productid ? item.productid : item._id %>">
+                                                Move to Wishlist
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                <% }); %>
+            <% } else { %>
+                <p>Your cart is empty.</p>
+            <% } %>
+        </div>
+        <div class="col-lg-5 mt-5 ">
+            <% if (cart && cart.items.length > 0) { %>
+            <div class="price-details">
+                <p><strong>Check out Refer and Earn page to unlock coupons.<a href="/product/refer/referral">Click here</a></strong></p>
+                <p>Total MRP: ₹<span id="totalMRP"><%= totalMRP.toLocaleString() %></span></p>
+                <p>Discount on MRP: - ₹<span id="totalDiscount"><%= totalDiscount.toLocaleString() %></span></p>
+                <p>Coupon Discount: - ₹<span id="couponDiscountValue">0</span> 
+                    <button id="applyCouponBtn">Apply Coupon</button>
+                    <button id="resetCouponBtn">Select new Coupon</button>
+                </p>
+    
+                <h6>Total Amount: ₹<span id="finalAmountValue"><%= finalAmount.toLocaleString() %></span></h6>
+                <button id="checkOut"class=" btn btn-danger">CHECKOUT NOW</button>
+            </div>
+            <% } %>
+        </div>
+    
+        <div id="couponModal" class="modal cartCoupon hidden">
+            <% if (cart && cart.items.length > 0) { %>
+            <div class="modal-content cartCouponContent">
+                <span class="closeCouponModal">&times;</span>
+                <h2>Apply Coupon</h2>
+        
+                <!-- Coupon Input Box -->
+                <div class="coupon-input-container">
+                    <input type="text" id="couponCodeInput" placeholder="Enter coupon code">
+                    <button id="checkCoupon">CHECK</button>
+                </div>
+                <div><strong>Use Reward or Referral Coupons first Otherwise it will lost after this order</strong></div>
+        
+                <!-- Coupon List -->
+                <ul id="couponList">
+                    <% if (coupons && coupons.length > 0) { %>
+                        <% coupons.forEach(coupon => { %>
+                            <li class="coupon-item">
+                                <input type="checkbox" class="coupon-checkbox" data-discount="<%= coupon.discountValue %>"data-discount-type="<%= coupon.discountType %>" data-is-active="<%= coupon.isActive ? 'true' : 'false' %>">>
+                                    <strong>Code: <%= coupon.code %></strong><br>
+                                    Discount type: <%= coupon.discountType %><br>
+                                    Discount: <%= coupon.discountValue %><br>
+                                    Min Order: ₹<%= coupon.minPurchase %><br>
+                                    Valid Until: <%= coupon.validTo ? new Date(coupon.validTo).toLocaleDateString("en-GB") : "No Expiry" %>
+                            </li>
+                        <% }) %>
+                    <% } else { %>
+                        <p>No coupons available.</p>
+                    <% } %>
+                </ul>
+                <div class="coupon-footer">  
+                    <button id="applySelectedCoupons">APPLY</button>
+                </div>
+            </div>
+            <% } %>
+        </div> 
+        </div>
+    </div>
+</div>
+
+<% if (cart && cart.items.length > 0) { %>
+<script>
+
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".cart-form").forEach(select => {
+    select.addEventListener("change", async (event) => {
+        const itemId = event.target.id.split('-')[1]; // Extract item ID from dropdown ID
+
+            // Get the selected values from dropdowns
+            const size = document.getElementById(`size-${itemId}`).value;
+            const color = document.getElementById(`color-${itemId}`).value;
+            const quantity = document.getElementById(`quantity-${itemId}`).value;
+
+            try {
+                // Send update request to the server
+                const response = await fetch("/product/update-cart", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ itemId, size, color, quantity })
+                });
+
+                const data = await response.json(); // Parse the JSON response
+
+                if (data.success) {
+                    // Update UI dynamically with new values
+                    document.getElementById(`size-${itemId}`).value = data.updatedItem.size;
+                    document.getElementById(`color-${itemId}`).value = data.updatedItem.color;
+                    document.getElementById(`quantity-${itemId}`).value = data.updatedItem.quantity;
+
+                    // Update individual item price and discounted price
+                    document.getElementById(`price-${itemId}`).innerText = `₹${data.updatedItem.totalPrice.toLocaleString()}`;
+                    document.getElementById(`discountedprice-${itemId}`).innerText = `₹${data.updatedItem.discountedPrice.toLocaleString()}`;
+
+                    // **Update Total Price Summary**
+                    document.getElementById("totalMRP").innerText = `${data.updatedItem.totalMRP.toLocaleString()}`;
+                    document.getElementById("totalDiscount").innerText = `${data.updatedItem.totalDiscount.toLocaleString()}`;
+                   
+                    document.getElementById("finalAmountValue").innerText = `${data.updatedItem.finalAmount.toLocaleString()}`;
+                    document.getElementById("shippingCharge").innerText = data.updatedItem.shippingCharge === 0 ? "FREE" : `₹${data.updatedItem.shippingCharge}`;
+                } 
+                if (data.status === "out_of_stock") {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Out of Stock",
+                        text: "The selected size and color variant is out of stock. Please choose another combination or move product to Wishlist.",
+                    });
+
+                    
+                    event.target.value = event.target.dataset.previousValue;
+                    
+                } 
+            } catch (error) {
+                console.error("Error updating cart:", error);
+                
+            }
+        });
+    });
+
+    let modal = document.getElementById("couponModal");
+    let closeButton = document.querySelector(".closeCouponModal");
+
+    // Ensure modal is hidden on page load
+    modal.classList.add("hidden");
+
+    // Open modal when clicking "Apply Coupon"
+    document.getElementById("applyCouponBtn").addEventListener("click", function () {
+        modal.classList.remove("hidden");
+    });
+    
+    
+
+    // Close modal when clicking "X"
+    closeButton.addEventListener("click", function () {
+        modal.classList.add("hidden");
+    });
+
+    // Close modal when clicking outside the modal content
+    modal.addEventListener("click", function (event) {
+        if (event.target === modal) {
+            modal.classList.add("hidden");
+        }
+    });
+
+    const changeAddressBtn = document.getElementById("change-address-btn");
+    const addAddressBtn = document.getElementById("add-address-btn");
+    const addressModal = document.getElementById("addressModal");
+    const closeModal = document.querySelector(".close");
+    const confirmAddressBtn = document.getElementById("confirm-address-btn");
+
+    if (changeAddressBtn) {
+        changeAddressBtn.addEventListener("click", () => {
+            addressModal.style.display = "block";
+        });
+    }
+
+    if (addAddressBtn) {
+        addAddressBtn.addEventListener("click", () => {
+        Swal.fire({
+            title: "Add or Edit Address",
+            text: "Please make changes in your profile.",
+            icon: "warning",
+            confirmButtonText: "Go to Profile"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "/profile?from=cart"; // Pass a flag in the URL
+            }
+        });
+    });
+    }
+
+    closeModal.addEventListener("click", () => {
+        addressModal.style.display = "none";
+    });
+
+    confirmAddressBtn.addEventListener("click", async () => {
+        const selectedAddress = document.querySelector("input[name='selectedAddress']:checked");
+
+        if (!selectedAddress) {
+            alert("Please select an address!");
+            return;
+        }
+
+        try {
+            const response = await fetch("/product/user/update-default-address", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ addressId: selectedAddress.value })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                location.reload(); // Refresh page to update address display
+            } else {
+                alert("Failed to update address!");
+            }
+        } catch (error) {
+            console.error("Error updating address:", error);
+            alert("Something went wrong!");
+        }
+    });
+
+    const couponDiscountValueElem = document.getElementById("couponDiscountValue");
+    const finalAmountValueElem = document.getElementById("finalAmountValue");
+    const applyCouponBtn = document.getElementById("applyCouponBtn");
+    const resetCouponBtn = document.getElementById("resetCouponBtn");
+    
+    // Retrieve stored values from localStorage
+    let storedCoupons = JSON.parse(localStorage.getItem("appliedCoupons")) || [];
+    let storedCouponDiscount = parseFloat(localStorage.getItem("couponDiscountValue")) || 0;
+    let storedFinalAmount = parseFloat(localStorage.getItem("finalAmount")) || 0;
+
+    // Update UI with stored values
+    if (storedCoupons.length > 0) {
+        couponDiscountValueElem.innerText = storedCouponDiscount.toFixed(2);
+        finalAmountValueElem.innerText = storedFinalAmount.toFixed(2);
+        toggleCouponButtons(true); // Show "Select New Coupon", hide "Apply Coupon"
+    } else {
+        toggleCouponButtons(false); // Show "Apply Coupon", hide "Select New Coupon"
+    }
+
+    // Apply Selected Coupons
+    document.getElementById("applySelectedCoupons").addEventListener("click", function () {
+        let checkedCoupons = document.querySelectorAll(".coupon-checkbox:checked");
+        let totalAmount = parseFloat(finalAmountValueElem.innerText.replace(/₹|,/g, ""));
+        let newCouponDiscount = 0;
+        let appliedCoupons = [];
+
+        checkedCoupons.forEach(checkbox => {
+            let discountValue = parseFloat(checkbox.dataset.discount);
+            let discountType = checkbox.dataset.discountType;
+            let couponCode = checkbox.closest("li").querySelector("strong").innerText.split(": ")[1];
+            let minPurchase = parseFloat(checkbox.parentElement.innerHTML.match(/Min Order: ₹(\d+)/)[1]);
+
+            let isActive = checkbox.dataset.isActive === "true";
+
+             // Check if the coupon is disabled (isActive: false)
+        if (!isActive) {
+            Swal.fire({
+            icon: "warning",
+            title: "Coupon Disabled",
+            text: `The coupon "${couponCode}" is currently disabled and cannot be used.`,
+        });
+        return; // Stop processing this coupon
+    } 
+            if (totalAmount < minPurchase) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Coupon Not Applicable",
+                    text: `Your order must be at least ₹${minPurchase} to use ${couponCode}`,
+                });
+                return;
+            }
+
+            if (discountType === "percentage") {
+                discountValue = (discountValue / 100) * totalAmount;
+            }
+
+            appliedCoupons.push({ code: couponCode, discount: discountValue });
+            newCouponDiscount += discountValue;
+        });
+
+        let finalAmount = totalAmount - newCouponDiscount;
+        if (finalAmount < 0) {
+            finalAmount = 0;
+        }
+
+        couponDiscountValueElem.innerText = newCouponDiscount.toFixed(2);
+        finalAmountValueElem.innerText = finalAmount.toFixed(2);
+
+        // Save updated values in localStorage
+        localStorage.setItem("appliedCoupons", JSON.stringify(appliedCoupons));
+        localStorage.setItem("couponDiscountValue", newCouponDiscount.toFixed(2));
+        localStorage.setItem("finalAmount", finalAmount.toFixed(2));
+
+        toggleCouponButtons(true);
+        setTimeout(() => {
+        let couponModal = document.getElementById("couponModal"); // Replace with your modal ID
+        if (couponModal) {
+            couponModal.style.display = "none"; // Hides the modal
+        }
+        window.location.reload();
+    }, 500);  
+    });
+
+    // Reset Coupons when cart is updated
+    document.querySelectorAll(".cart-form").forEach(select => {
+        select.addEventListener("change", resetCoupons)})
+    
+
+    resetCouponBtn.addEventListener("click", resetCoupons);
+
+    function resetCoupons() {
+        let currentFinalAmount = parseFloat(finalAmountValueElem.innerText.replace(/₹|,/g, ""));
+        let appliedDiscount = parseFloat(couponDiscountValueElem.innerText.replace(/₹|,/g, ""));
+
+        let resetAmount = currentFinalAmount + appliedDiscount;
+
+        localStorage.removeItem("appliedCoupons");
+        localStorage.removeItem("couponDiscountValue");
+        localStorage.removeItem("finalAmount");
+
+        couponDiscountValueElem.innerText = "0";
+        finalAmountValueElem.innerText = resetAmount.toFixed(2);
+
+        toggleCouponButtons(false); // Show "Apply Coupon", hide "Select New Coupon"
+        
+        
+        console.log("Cart Updated: Coupon reset.");
+    }
+
+    // Function to toggle button visibility
+    function toggleCouponButtons(hasCoupon) {
+        if (hasCoupon) {
+            applyCouponBtn.style.display = "none";
+            resetCouponBtn.style.display = "inline-block"; // Show "Select New Coupon"
+        } else {
+            applyCouponBtn.style.display = "inline-block"; // Show "Apply Coupon"
+            resetCouponBtn.style.display = "none";
+        }
+    }
+
+    document.getElementById("checkOut").addEventListener("click", async function () {
+    // Get the selected address ID
+    let selectedAddress = "<%= address ? address._id : '' %>";
+    
+
+    // Check if address exists
+    if (!selectedAddress || Object.keys(selectedAddress).length === 0) {
+        Swal.fire({
+            icon: "warning",
+            title: "Address Required",
+            text: "Please select a valid shipping address before proceeding.",
+        });
+        return;
+    }
+    try {
+        // Fetch selected address details from the server
+        let response = await fetch(`/product/get-address/${selectedAddress}`);
+        let data = await response.json();
+        let address = data.address;
+        console.log(address);
+        if (!address || Object.keys(address).length === 0) {
+            Swal.fire({
+                icon: "warning",
+                title: "Invalid Address",
+                text: "The selected address is not valid. Please choose or add another.",
+            });
+            return;
+        }
+
+        // Required fields for validation
+        const requiredFields = ["type", "country", "houseName", "pin", "state"];
+        let missingFields =[];
+
+        // Trim whitespace and check if required fields are empty
+        requiredFields.forEach(field => {
+            if (!address[field] || address[field].trim() === "") {
+                missingFields.push(field);
+            }
+        });
+
+        // Ensure either "city" or "street" is filled
+        if (!(address.city?.trim()) && !(address.street?.trim())) {
+            missingFields.push("city/street");
+        }
+
+        // If missing fields exist, show an alert
+        if (missingFields.length > 0) {
+            Swal.fire({
+                icon: "warning",
+                title: "Incomplete Address",
+                text: `Your selected address is incomplete. Missing: ${missingFields.join(", ")}`,
+            });
+            return;
+        }
+
+    } catch (error) {
+        console.error("Error fetching address:", error);
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Something went wrong while fetching the address. Please try again.",
+        });
+        return;
+    }
+
+    try {
+        // Check stock availability of items in the cart
+        let response = await fetch("/product/cart/check-stock");
+    let data = await response.json();
+
+    if (data.outOfStockItems.length > 0) {
+        let outOfStockMsg = data.outOfStockItems.map(item => 
+            `Size: ${item.size}, Color: ${item.color} is out of stock`
+        ).join("\n");
+
+        Swal.fire({
+            icon: "error",
+            title: "Out of Stock Items",
+            text: "Some products in your cart are out of stock.Either choose another variant of the product or move to wishlist."
+        });
+
+        return;
+    } 
+
+
+        // Get coupon discount value
+        let couponDiscount = document.getElementById("couponDiscountValue").innerText || "0";
+
+        // Store billing details in localStorage (including Coupon Discount)
+        let billingDetails = {
+            totalMRP: "<%= totalMRP %>",
+            totalDiscount: "<%= totalDiscount %>",
+            couponDiscount: couponDiscount, // New field
+            finalAmount: "<%= finalAmount %>"
+        };
+
+        localStorage.setItem("billingDetails", JSON.stringify(billingDetails));
+
+        // Redirect to checkout page
+        window.location.href = "/product/checkout";
+
+    } catch (error) {
+        console.error("Error checking stock:", error);
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Something went wrong while checking stock. Please try again.",
+        });
+    }
+});
+
+
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("click", function (event) {
+        if (event.target.classList.contains("cart-btn-remove")) {
+            // Get product ID directly from the button
+            const productId = event.target.dataset.productid;
+            console.log("Clicked Remove button - Product ID:", productId); // Debugging log
+
+            if (!productId) {
+                Swal.fire("Error!", "Product ID is missing.", "error");
+                return;
+            }
+
+            Swal.fire({
+                title: "Are you sure?",
+                text: "Do you want to remove this product from your cart?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Yes, remove it!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/product/cart/remove/${productId}`, {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Server response:", data);
+                        if (data.status === "success") {
+                            event.target.closest(".cart-card").remove(); // Remove from UI
+                            Swal.fire("Removed!", "Product has been removed from cart.", "success");
+
+
+                            // **Update Total Price Summary**
+                    document.getElementById("totalMRP").innerText = `${data.updatedItem.totalMRP.toLocaleString()}`;
+                    document.getElementById("totalDiscount").innerText = `${data.updatedItem.totalDiscount.toLocaleString()}`;
+                   
+                    document.getElementById("finalAmountValue").innerText = `${data.updatedItem.finalAmount.toLocaleString()}`;
+
+                        } else {
+                            Swal.fire("Error!", data.message, "error");
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Fetch error:", error);
+                        Swal.fire("Error!", "Something went wrong.", "error");
+                    });
+                }
+            });
+        }
+    });
+});
+
+    // Move to Wishlist Event Listener
+    document.addEventListener("click", function (event) {
+        if (event.target.classList.contains("cart-btn-wish")) {
+            const productId = event.target.dataset.productid;
+            console.log("Move to Wishlist clicked, Product ID:", productId); // Debugging log
+
+            fetch(`/product/wishlist/add/${productId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Server response:", data); // Debugging log
+                if (data.status === "success") {
+                    event.target.closest(".cart-card").remove(); // Remove item from UI
+                    Swal.fire("Moved!", "Product has been moved to Wishlist.", "success");
+                    // **Update Total Price Summary**
+                    document.getElementById("totalMRP").innerText = `${data.updatedItem.totalMRP.toLocaleString()}`;
+                    document.getElementById("totalDiscount").innerText = `${data.updatedItem.totalDiscount.toLocaleString()}`;
+                   
+                    document.getElementById("finalAmountValue").innerText = `${data.updatedItem.finalAmount.toLocaleString()}`;
+                } else {
+                    Swal.fire("Error!", data.message, "error");
+                }
+            })
+            .catch(error => {
+                console.error("Fetch error:", error);
+            });
+        }
+    });
+
+</script>
+<% } %>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/main.js"></script>
+
+</body>
+</html>

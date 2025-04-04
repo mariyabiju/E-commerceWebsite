@@ -1,0 +1,337 @@
+<!-- Bootstrap Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-danger mainNav">
+  <div class="container-fluid d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center">
+          <a class="navbar-brand text-white me-3 ms-2" href="/product/home">Wardrobe</a>
+          
+          <!-- Search Bar (Visible only on large screens) -->
+          <div class="input-group search-container d-none d-lg-flex">
+              <button class="btn category-btn input-group-text" id="categoryDropdownBtn">
+                  <i class="fas fa-list" style="color: black"></i>
+              </button>
+              <ul id="categoryDropdown" class="dropdown-menu position-absolute">
+                  <% categories.forEach(category => { %>
+                      <li>
+                          <a class="dropdown-item category-link"
+                              href="/product/category/<%= category._id %>?category=<%= category._id %>">
+                              <%= category.name %>
+                          </a>
+                      </li>
+                  <% }); %>
+              </ul>
+              <form action="/product/search" method="GET" class="d-flex position-relative">
+                  <input class="form-control pe-5 searchBar border-0 bg-transparent" type="search" name="q" 
+                      placeholder="Search for products, brands, and more" 
+                      aria-label="Search">
+                  <button class="searchButton border-0 bg-transparent position-absolute end-0 me-2" 
+                      type="submit" style="top: 50%; transform: translateY(-50%);">
+                      <i class="fas fa-search"></i>
+                  </button>
+              </form>
+          </div>
+      </div>
+
+      <!-- Desktop Icons (Visible on large screens) -->
+      <div class="d-none d-lg-flex align-items-center">
+          <div class="profile-hover text-center position-relative d-flex flex-column align-items-center me-5">
+              <button class="btn profile-btn input-group-text d-flex flex-column align-items-center" id="profileDropdownBtn">
+                  <i class="fas fa-user-circle fs-5 text-white navIcon"></i>
+                  <small class="text-white mt-1">Profile</small>
+              </button>
+              <ul id="profileDropdown" class="profile-options bg-white border rounded position-absolute">
+                  <% if (user) { %>
+                      <li class="dropdown-item text-dark p-2">Hi, <%= user.fname %>!</li>
+                      <li>
+                        <a href="javascript:void(0);" onclick="handleProfileClick()" class="dropdown-item p-2 profile-option">
+                            Edit Profile
+                        </a>
+                    </li>
+                      <li><a  href="javascript:void(0);"  onclick=" checkOrder()" class="dropdown-item p-2 profile-option">Orders</a></li>
+                      <li><a  href="javascript:void(0);"  onclick=" checkWallet()"class="dropdown-item p-2 profile-option">Wallet</a></li>
+                      <li><a  href="javascript:void(0);"  onclick=" checkReferPg()" class="dropdown-item p-2 profile-option">Refer and Earn</a></li>
+                      <li><a href="/contact" class="dropdown-item p-2 profile-option">Contact Us</a></li>
+                      <li>
+                        <a href="javascript:void(0);" onclick="confirmLogout()" class="dropdown-item p-2 text-danger logout">
+                            Logout
+                        </a>
+                    </li>
+                    
+                  <% } else { %>
+                      <li><a href="/login" class="dropdown-item p-2 profile-option">Login/Signup</a></li>
+                      <li>
+                        <a href="javascript:void(0);" onclick="handleProfileClick()" class="dropdown-item p-2 profile-option">
+                            Edit Profile
+                        </a>
+                    </li>
+                      <li><a href="javascript:void(0);" onclick=" checkOrder()" class="dropdown-item p-2 profile-option">Orders</a></li>
+                      <li><a  href="javascript:void(0);"  onclick=" checkWallet()"class="dropdown-item p-2 profile-option">Wallet</a></li>
+                      <li><a  href="javascript:void(0);"  onclick=" checkReferPg()" class="dropdown-item p-2 profile-option">Refer and Earn</a></li>
+                      <li><a href="/contact" class="dropdown-item p-2 profile-option">Contact Us</a></li>
+                  <% } %>
+              </ul>
+          </div>
+
+          <div class="text-center me-3" onclick="checkWishlist()">
+            <div class="d-flex flex-column align-items-center">
+                  <i class="far fa-heart text-white fs-5 navIcon" data-bs-toggle="tooltip" title="Wishlist"></i>
+                    <small class="text-white" onclick="checkWishlist()">Wishlist</small>
+              </div>
+          </div>
+
+          <div class="text-center" onclick="checkCart()">
+            <div class="d-flex flex-column align-items-center position-relative">
+                <i class="fas fa-shopping-cart text-white fs-5 navIcon" data-bs-toggle="tooltip" title="Cart"></i>
+                <span id="cartCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    0
+                </span>
+                <small class="text-white" onclick="checkCart()">Cart</small>
+            </div>
+        </div>
+        
+        
+      </div>
+
+      <!-- Mobile Menu Button -->
+      <button class="navbar-toggler d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNav">
+          <span class="navbar-toggler-icon"></span>
+      </button>
+  </div>
+</nav>
+
+<!-- Mobile Sidebar Menu -->
+<div class="offcanvas offcanvas-start bg-danger text-white" id="mobileNav">
+  <div class="offcanvas-header">
+      <h5 class="offcanvas-title">Wardrobe</h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+      <!-- Search Bar -->
+      <form action="/product/search" method="GET" class="d-flex mb-3">
+          <input class="form-control pe-5 searchBar bg-light border-0" type="search" name="q" 
+              placeholder="Search for products, brands, and more" aria-label="Search">
+          <button class="searchButton border-0 bg-transparent position-absolute end-0 me-2" 
+              type="submit" style="top: 50%; transform: translateY(-50%);">
+              <i class="fas fa-search text-dark"></i>
+          </button>
+      </form>
+
+      <!-- Menu Items -->
+      <ul class="list-unstyled">
+          <li><a href="/profile" class="text-white text-decoration-none d-block py-2">Edit Profile</a></li>
+          <li><a href="/orders" class="text-white text-decoration-none d-block py-2">Orders</a></li>
+          <li><a href="/wallet" class="text-white text-decoration-none d-block py-2">Wallet</a></li>
+          <li><a href="/contact" class="text-white text-decoration-none d-block py-2">Contact Us</a></li>
+          <% if (user) { %>
+              <li><a href="/logout" class="text-white text-decoration-none d-block py-2">Logout</a></li>
+          <% } else { %>
+              <li><a href="/login" class="text-white text-decoration-none d-block py-2">Login/Signup</a></li>
+          <% } %>
+          <li><a href="#" class="text-white text-decoration-none d-block py-2">Wishlist</a></li>
+          <li><a href="#" class="text-white text-decoration-none d-block py-2">Cart</a></li>
+      </ul>
+  </div>
+</div>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Logout Confirmation with SweetAlert
+function confirmLogout() {
+    Swal.fire({
+        title: "Are you sure?",
+        text: "You will be logged out!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Yes, Logout!"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            handleLogout();
+        }
+    });
+}
+
+// Logout Request
+function handleLogout() {
+    fetch("/logout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin"
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Clear session & local storage
+            sessionStorage.clear();
+            localStorage.clear();
+
+            // Redirect to normal home page
+            window.location.replace(data.redirect);
+
+            // Prevent going back after logout
+            setTimeout(() => {
+                window.history.replaceState(null, null, data.redirect);
+            }, 100);
+        } else {
+            Swal.fire("Error", "Logout failed!", "error");
+        }
+    })
+    .catch(error => {
+        console.error("Logout Error:", error);
+        Swal.fire("Error", "Something went wrong!", "error");
+    });
+}
+function handleProfileClick() {
+    // Check if user is logged in
+    var userLoggedIn = <%= user ? 'true' : 'false' %>;
+
+    if (userLoggedIn) {
+        // Redirect to profile page if logged in
+        window.location.href = "/profile";
+    } else {
+        // Show SweetAlert to prompt login
+        Swal.fire({
+            icon: 'warning',
+            title: 'Login Required',
+            text: 'You need to log in first to edit your profile.',
+            showCancelButton: true,
+            confirmButtonText: 'Login',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "/login"; // Redirect to login page
+            }
+        });
+    }
+}
+function checkCart() {
+    var userLoggedIn = <%= user ? 'true' : 'false' %>; // Read user status from backend
+
+    if (userLoggedIn) {
+        window.location.href = "/product/cartpage"; // Redirect if logged in
+    } else {
+        Swal.fire({
+            icon: "warning",
+            title: "Login Required",
+            text: "You need to log in first to view your cart.",
+            showCancelButton: true,
+            confirmButtonText: "Login",
+            cancelButtonText: "Cancel"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "/login"; // Redirect to login if confirmed
+            }
+        });
+    }
+}
+function checkOrder() {
+    var userLoggedIn = <%= user ? 'true' : 'false' %>; // Read user status from backend
+
+    if (userLoggedIn) {
+        window.location.href = "/product/orders"; // Redirect if logged in
+    } else {
+        Swal.fire({
+            icon: "warning",
+            title: "Login Required",
+            text: "You need to log in first to view your order history.",
+            showCancelButton: true,
+            confirmButtonText: "Login",
+            cancelButtonText: "Cancel"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "/login"; // Redirect to login if confirmed
+            }
+        });
+    }
+}
+function checkWishlist() {
+    var userLoggedIn = <%= user ? 'true' : 'false' %>; // Read user status from backend
+
+    if (userLoggedIn) {
+        window.location.href = "/product/wishlist"; // Redirect if logged in
+    } else {
+        Swal.fire({
+            icon: "warning",
+            title: "Login Required",
+            text: "You need to log in first to view your wishlist.",
+            showCancelButton: true,
+            confirmButtonText: "Login",
+            cancelButtonText: "Cancel"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "/login"; // Redirect to login if confirmed
+            }
+        });
+    }
+}
+
+function checkReferPg(){
+    var userLoggedIn = <%= user ? 'true' : 'false' %>; // Read user status from backend
+
+if (userLoggedIn) {
+    window.location.href = "/product/refer/referral"; // Redirect if logged in
+} else {
+    Swal.fire({
+        icon: "warning",
+        title: "Login Required",
+        text: "You need to log in first to use Refer and Earn.",
+        showCancelButton: true,
+        confirmButtonText: "Login",
+        cancelButtonText: "Cancel"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = "/login"; // Redirect to login if confirmed
+        }
+    });
+}
+
+}
+function checkWallet(){
+    var userLoggedIn = <%= user ? 'true' : 'false' %>; // Read user status from backend
+
+if (userLoggedIn) {
+    window.location.href = "/wallet"; // Redirect if logged in
+} else {
+    Swal.fire({
+        icon: "warning",
+        title: "Login Required",
+        text: "You need to log in first to use Refer and Earn.",
+        showCancelButton: true,
+        confirmButtonText: "Login",
+        cancelButtonText: "Cancel"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = "/login"; // Redirect to login if confirmed
+        }
+    });
+}
+
+}
+
+
+
+
+// Fetch and update cart count dynamically
+function updateCartCount() {
+    fetch("/product/cart/count")
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("cartCount").innerText = data.count || 0;
+        })
+        .catch(error => console.error("Error fetching cart count:", error));
+}
+
+// Call updateCartCount when the page loads
+document.addEventListener("DOMContentLoaded", updateCartCount);
+
+// Prevent Back Navigation After Logout
+window.onload = function () {
+    window.history.replaceState(null, null, window.location.href);
+    window.addEventListener("popstate", function () {
+        window.history.replaceState(null, null, window.location.href);
+    });
+};
+
+    
+</script>
+<script src="/js/main.js"></script>
+

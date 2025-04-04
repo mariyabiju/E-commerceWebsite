@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wardrobe</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-danger">
+    <div class="container-fluid d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center">
+        <a class="navbar-brand text-white me-3 ms-2" href="/product/home">Wardrobe</a>
+        <!-- Search Bar -->
+        <div class="input-group search-container">
+          <button class="btn category-btn input-group-text">
+            <i class="fas fa-list" style="color: black"></i>
+          </button>
+          <input class="form-control" type="search" placeholder="Search for products, brands and more" aria-label="Search">
+          <span class="input-group-text">
+            <i class="fas fa-search text-muted"></i>
+          </span>
+        </div>
+      </div>
+      <div class="d-flex align-items-center"> 
+        <!-- Profile Icon -->
+        <div class="profile-hover text-center position-relative d-flex align-items-center me-5"> 
+          <i class="fas fa-user-circle text-white" style="font-size: 1.4rem; margin-right: 8px;"></i>
+          <div class="profile-options bg-white border rounded position-absolute d-none" style="top: 45px; right: 0;">
+            <a href="#" class="d-block p-2">Profile</a>
+            <a href="#" class="d-block p-2">Orders</a>
+            <a href="#" class="d-block p-2">Logout</a>
+          </div>
+          <a href="/login" class="text-white small">Login</a><!-- Label for Profile -->
+        </div>
+      
+        <!-- Wishlist Icon -->
+        <div class="text-center me-3">
+          <i class="far fa-heart text-white" style="font-size: 1.4rem;" data-bs-toggle="tooltip" data-bs-placement="top" title="Wishlist"></i>
+        </div>
+      
+        <!-- Cart Icon -->
+        <div class="text-center">
+          <i class="fas fa-shopping-cart text-white" style="font-size: 1.4rem;" data-bs-toggle="tooltip" data-bs-placement="top" title="Cart"></i>
+        </div>
+      </div>
+    </div>
+  </nav>
+    <div class="container p-4 " id="mainLogin">
+        <div class="auth-buttons">
+          <button id="loginBtn">LOGIN</button>
+          <button id="registerBtn"  class="active">REGISTER</button>
+        </div>
+
+    <!-- Register Form -->
+    <div id="registerForm" class="card p-4 mx-auto form-container">
+        <form id="registerFormElement" action="/register" method="post">
+          <div class="form-group">
+            <input type="text" id="firstname" name="fname" placeholder=" " >
+            <label for="firstname">First Name</label>
+            <small class="error-text text-danger d-none" id="firstnameError">First name is required.</small>
+          </div>
+          <div class="form-group">
+            <input type="text" id="lastname" name="lname" placeholder=" " >
+            <label for="lastname">Last Name</label>
+            <small class="error-text text-danger d-none" id="lastnameError">Last name is required.</small>
+          </div>
+          <div class="form-group">
+            <input type="email" id="email" name="emailId"  placeholder=" ">
+            <label for="email">Email</label>
+            <small class="error-text text-danger d-none" id="emailError">Email is required.</small>
+          </div>
+          <div class="form-group">
+            <input type="password" id="password" name="password"   placeholder=" ">
+            <label for="password">Password</label>
+            <ul id="password-requirements" class="password-requirements">
+              <li class="uppercase">At least 1 uppercase letter</li>
+              <li class="number">At least 1 number</li>
+              <li class="special">At least 1 special character</li>
+              <li class="length">Maximum 8 characters</li>
+            </ul>
+            <small class="error-text text-danger d-none" id="passwordError">Password is required.</small>
+          </div>
+          <div class="form-group">
+            <input type="password" id="confirmPassword" name="hashedPassword"  placeholder=" ">
+            <label for="confirmPassword">Confirm Password</label>
+           <small class="error-text text-danger d-none" id="passwordError">Confirm Password is required.</small>
+          </div>
+          <div class="form-group">
+            <input type="text" id="phone" name="phoneNumber" placeholder=" ">
+            <label for="phone">Phone Number</label>
+            <small class="error-text text-danger d-none" id="phoneError">Phone number is required.</small>
+          </div>
+          <div class="form-group">
+            <input type="date" id="birthday" name="birthDate" placeholder=" ">
+            <label for="birthday">Birthday</label>
+            <small class="error-text text-danger d-none" id="birthdayError">Birthday is required.</small>
+          </div>
+          <button type="submit" class="btn btn-danger w-100" id="register">Register</button>
+          <% if (errorMessage) { %>
+            <div class="custom-flash "><%= errorMessage %></div>
+          <% } %>
+          
+          <% if (successMessage) { %>
+            <div class="custom-flash "><%= successMessage %></div>
+          <% } %>
+          
+        </form>
+        <% if (typeof error !== "undefined") { %>
+          <div class="error-message" style="color: red;">
+            <%= errorMessage %>
+          </div>
+        <% } %>
+    </div>
+    <!-- Login Form (Hidden Initially) -->
+        <div id="loginForm" class="card p-4 mx-auto form-container d-none">
+            <div class="social-buttons d-flex justify-content-center gap-3 mt-3">
+              <!-- Google Box -->
+              <div class="social-box google d-flex align-items-center justify-content-center">
+                <img src="https://cdn2.hubspot.net/hubfs/53/image8-2.jpg" alt="Google" class="logo"><a href="/auth/google">
+                  <span>Google</span></a>
+              </div>
+              <!-- Facebook Box -->
+              <div class="social-box facebook d-flex align-items-center justify-content-center">
+                <img src="https://e7.pngegg.com/pngimages/174/233/png-clipart-computer-icons-facebook-inc-social-media-logo-facebook-rectangle-logo-thumbnail.png" alt="Facebook" class="logo">
+                <span>Facebook</span>
+              </div>
+            </div>
+            <div class="or-divider">OR</div>
+            <form action="/login" method="post" id="submitLogin">
+              <div class="mb-3">
+                <label for="loginemail" class="form-label ">Email</label>
+                <input type="text" class="form-control" id="loginemail"  name="emailId">
+                <small class="error-text text-danger d-none" id="emailError">Email is required.</small>
+                
+              </div>
+              <div class="mb-3">
+                <label for="loginPassword" class="form-label ">Password</label>
+                <input type="password" class="form-control" id="loginPassword" name="password">
+                <small class="error-text text-danger d-none" id="passwordError">Password is required.</small>
+              </div>
+              <div class="forgot-password">
+                <a href="/forgot_password" class="text-decoration-none">Forgot Password?</a>
+              </div>
+    
+              <% if (typeof error !== "undefined") { %>
+                <p style="color: red"><%= error %></p>
+            <% } %>
+              <div class="or-divider">OR</div>
+            <p class="text-center text-white" id="usePhoneLink">Use phone number instead</p>
+              <button type="submit" class="btn submitbutton w-50">Login</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        // Toggle between login and register forms
+        document.getElementById('loginBtn').addEventListener('click', function() {
+            document.getElementById('loginForm').classList.remove('d-none');
+            document.getElementById('registerForm').classList.add('d-none');
+            this.classList.add('active');
+            document.getElementById('registerBtn').classList.remove('active');
+        });
+
+        document.getElementById('registerBtn').addEventListener('click', function() {
+            document.getElementById('loginForm').classList.add('d-none');
+            document.getElementById('registerForm').classList.remove('d-none');
+            this.classList.add('active');
+            document.getElementById('loginBtn').classList.remove('active');
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const form = document.getElementById("registerForm");
+
+            form.addEventListener("submit", function(event) {
+                let isValid = true;
+
+                // Clear previous error messages
+                document.querySelectorAll(".error").forEach(el => el.textContent = "");
+
+                // Name validation
+                const firstname = document.getElementById("firstname").value.trim();
+                if (firstname === "") {
+                    document.getElementById("nameError").textContent = "Full Name is required";
+                    isValid = false;
+                }
+
+                const lastname = document.getElementById("lastname").value.trim();
+                if (lastname === "") {
+                    document.getElementById("nameError").textContent = "Full Name is required";
+                    isValid = false;
+                }
+
+                // Email validation
+                const email = document.getElementById("email").value.trim();
+                const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (email === "") {
+                    document.getElementById("emailError").textContent = "Email is required";
+                    isValid = false;
+                } else if (!emailPattern.test(email)) {
+                    document.getElementById("emailError").textContent = "Invalid email format";
+                    isValid = false;
+                }
+
+                // Password validation
+                const password = document.getElementById("password").value.trim();
+                if (password === "") {
+                    document.getElementById("passwordError").textContent = "Password is required";
+                    isValid = false;
+                }
+
+                // Confirm password validation
+                const confirmPassword = document.getElementById("confirmPassword").value.trim();
+                if (confirmPassword === "") {
+                    document.getElementById("confirmPasswordError").textContent = "Confirm Password is required";
+                    isValid = false;
+                } else if (password !== confirmPassword) {
+                    document.getElementById("confirmPasswordError").textContent = "Passwords do not match";
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    event.preventDefault(); // Prevent form submission if errors exist
+                }
+            });
+
+            // Add blur event listeners for real-time validation
+            document.getElementById("name").addEventListener("blur", function() {
+                if (this.value.trim() === "") {
+                    document.getElementById("nameError").textContent = "Full Name is required";
+                } else {
+                    document.getElementById("nameError").textContent = "";
+                }
+            });
+
+            document.getElementById("email").addEventListener("blur", function() {
+                if (this.value.trim() === "") {
+                    document.getElementById("emailError").textContent = "Email is required";
+                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value.trim())) {
+                    document.getElementById("emailError").textContent = "Invalid email format";
+                } else {
+                    document.getElementById("emailError").textContent = "";
+                }
+            });
+
+            document.getElementById("password").addEventListener("blur", function() {
+                if (this.value.trim() === "") {
+                    document.getElementById("passwordError").textContent = "Password is required";
+                } else {
+                    document.getElementById("passwordError").textContent = "";
+                }
+            });
+
+            document.getElementById("confirmPassword").addEventListener("blur", function() {
+                if (this.value.trim() === "") {
+                    document.getElementById("confirmPasswordError").textContent = "Confirm Password is required";
+                } else if (this.value.trim() !== document.getElementById("password").value.trim()) {
+                    document.getElementById("confirmPasswordError").textContent = "Passwords do not match";
+                } else {
+                    document.getElementById("confirmPasswordError").textContent = "";
+                }
+            });
+        });
+    </script>

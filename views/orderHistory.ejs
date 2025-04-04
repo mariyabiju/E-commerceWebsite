@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wardrobe</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Dancing+Script:wght@400;700&family=Montserrat:wght@400;700&family=Lora:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css"> 
+</head>
+
+<body>
+    <%- include('partials/navbar') %>
+    <h2 class="mt-3 ms-3">Order History</h2>
+<!-- Tab Navigation -->
+<div class="tabs mt-5">
+    <button class="tab-link active" onclick="showTab('pendingOrders')">Pending</button>
+    <button class="tab-link" onclick="showTab('deliveredOrders')">Delivered</button>
+    <button class="tab-link" onclick="showTab('cancelledOrders')">Cancelled</button>
+</div>
+<!-- Filter Options -->
+<form method="GET" action="/product/orders" class="datefilter-order">
+    <label class="datefilter-orderlabel">Filter By Date:</label>
+    <select class="datefilter-orderselect" name="filter" onchange="this.form.submit()">
+        <option value="">All</option>
+        <option value="today" <%= filter === "today" ? "selected" : "" %>>Today</option>
+        <option value="last_month" <%= filter === "last_month" ? "selected" : "" %>>Last 1 Month</option>
+    </select>
+</form>
+
+<!-- Pending Orders -->
+<div id="pendingOrders" class="tab-content">
+    <h5>Pending Orders</h5>
+    <% pendingOrders.forEach(order => { %>
+        <div class="order-card" onclick="redirectToOrder('<%= order._id %>')">
+            <div class="order-header">
+                <span>Order Number: <%= order.orderNumber %></span>
+                <span>Order Date: <%= new Date(order.orderDate).toLocaleDateString() %></span>
+                <p>
+                    <span>Total Price: ₹<%= order.orderSummary.total.toFixed(2) %></span>
+                    <span>Payment Method: <%= order.paymentDetails.method %></span>
+                </p>
+            </div>
+            <div class="order-products">
+                <% order.products.slice(0, 2).forEach(product => { %>
+                    <div class="product-card-order">
+                        <img src="<%= '/uploads/' + product.imageUrls[0].replace(/^uploads\\/, '').replace(/\\/g, '/').replace(/ /g, '%20') %>" 
+                            alt="<%= product.productName %>" 
+                            class="product-img-order">                        
+                        <div class="product-details-order">
+                            <h6><%= product.productName %></h6>
+                            <% if (product.refundSuccess) { %>
+                                <p style="color: red; font-weight: bold;">Product Cancelled</p>
+                                <p>Refund: <%= product.refundGivenMethod ? `Refund given by ${product.refundGivenMethod}` : "Refund pending" %></p>
+                            <% } else { %>
+                                <p style="color: rgb(18, 139, 38); font-weight: bold;"><%= order.status %></p>
+                                <p>Expected Delivery: <%= order.expectedDeliveryDate ? new Date(order.expectedDeliveryDate).toLocaleDateString() : "TBD" %></p>
+                            <% } %>
+                        </div>
+                    </div>                    
+                <% }); %>
+        
+                <% if (order.products.length > 2) { %>
+                    <p class="more-products">+<%= order.products.length - 2 %> more</p>
+                <% } %>
+            </div>
+        </div>
+    <% }); %>
+    <div class="pagination">
+        <% if (currentPage > 1) { %>
+            <a href="javascript:void(0);" onclick="fetchOrders('pendingOrders', <%= currentPage - 1 %>)">Previous</a>
+        <% } %>
+        
+            <% for (let i = 1; i <=  totalPagesPending; i++) { %>
+                <% if (i === currentPage) { %>
+                    <span class="active-page"><%= i %></span>
+                <% } else { %>
+                    <a href="javascript:void(0);" onclick="fetchOrders('pendingOrders', <%= i %>)"><%= i %></a>
+
+                <% } %>
+            <% } %>
+        
+            <% if (currentPage < totalPagesPending) { %>
+                <a href="javascript:void(0);" onclick="fetchOrders('pendingOrders', <%= currentPage + 1 %>)">Next</a>
+            <% } %>
+    </div>
+</div>
+
+
+<!-- Delivered Orders -->
+<div id="deliveredOrders" class="tab-content" style="display: none;">
+    <h5>Delivered Orders</h5>
+    <% deliveredOrders.forEach(order => { %>
+        <div class="order-card" onclick="redirectToOrder('<%= order._id %>')">
+            <div class="order-header">
+                <span>Order Number: <a href="/product/order/<%= order._id %>"><%= order.orderNumber %></a></span>
+                <span>Order Date: <%= new Date(order.orderDate).toLocaleDateString() %></span>
+                <p>
+                    <span>Total Price: ₹<%= order.orderSummary.total.toFixed(2) %></span>
+                    <span>Payment Method: <%= order.paymentDetails.method %></span>
+                </p>
+            </div>
+
+            <div class="order-products">
+                <% order.products.slice(0, 2).forEach(product => { %>
+                    <div class="product-card-order">
+                        <!-- Product Image on Left -->
+                        <img src="<%= '/uploads/' + product.imageUrls[0].replace(/^uploads\\/, '').replace(/\\/g, '/').replace(/ /g, '%20') %>" 
+                            alt="<%= product.productName %>" 
+                            class="product-img-order">
+                    
+                        <!-- Product Details on Right -->
+                        <div class="product-details-order">
+                            <h6><%= product.productName %></h6>
+                            
+                            <% if (product.refundSuccess) { %>
+                                <p style="color: red; font-weight: bold;">Product Cancelled</p>
+                                    <p>Refund: <%= product.refundGivenMethod ? `Refund given by ${product.refundGivenMethod}` : "Refund pending" %></p>
+                                
+                            <% } else if (product.return_cancel && product.return_cancel.cancelRequested&&!product.refundSuccess) { %>
+                                <% if (product.return_cancel.returnInitiated) { %>
+                                    <p style="color: red; font-weight: bold;">Product Returned </p>
+                                    <p>Refund: <%= product.return_cancel.refundGivenMethod ? `Refund given by ${product.return_cancel.refundMethod}` : "Refund pending" %></p>
+                                    <% } else { %>
+                                    <p>Status: Delivered (Return Product Initiated)</p>
+                                <% } %>
+                            <% } else { %>
+                                <p style="color: rgb(18, 139, 38); font-weight: bold;"><%= order.status %></p>
+                            <% } %>
+
+                        </div>
+                    </div>                    
+                <% }); %>
+
+                <p><% if (order.products.length > 2) { %>
+                    <div class="more-products">+<%= order.products.length - 2 %> more</div>
+                <% } %></p>
+            </div>
+        </div>
+    <% }); %>
+    <div class="pagination">
+        <% if (currentPage > 1) { %>
+            <a href="javascript:void(0);" onclick="fetchOrders('deliveredOrders', <%= currentPage - 1 %>)">Previous</a>
+        <% } %>
+        
+            <% for (let i = 1; i <= totalPagesDelivered; i++) { %>
+                <% if (i === currentPage) { %>
+                    <span class="active-page"><%= i %></span>
+                <% } else { %>
+                    <a href="javascript:void(0);" onclick="fetchOrders('deliveredOrders', <%= i %>)"><%= i %></a>
+
+                <% } %>
+            <% } %>
+        
+            <% if (currentPage < totalPagesDelivered) { %>
+                <a href="javascript:void(0);" onclick="fetchOrders('deliveredOrders', <%= currentPage + 1 %>)">Next</a>
+            <% } %>
+    </div>
+        
+    
+</div>
+</div>
+
+<!-- Cancelled Orders -->
+<div id="cancelledOrders" class="tab-content" style="display: none;">
+    <h5>Cancelled Orders</h5>
+
+    <% cancelledOrders.forEach(order => { %>
+        <div class="order-card" onclick="redirectToOrder('<%= order._id %>')">
+            <div class="order-header">
+                <span>Order Number: <a href="/product/order/<%= order._id %>"><%= order.orderNumber %></a></span>
+                <span>Order Date: <%= new Date(order.orderDate).toLocaleDateString() %></span>
+                <p>
+                    <span>Total Price: ₹<%= order.orderSummary.total.toFixed(2) %></span>
+                    <span>Payment Method: <%= order.paymentDetails.method %></span>
+                </p>
+            </div>
+
+            <div class="order-products">
+                <% order.products.slice(0, 2).forEach(product => { %>
+                    <div class="product-card-order">
+                        <img src="<%= '/uploads/' + product.imageUrls[0].replace(/^uploads\\/, '').replace(/\\/g, '/').replace(/ /g, '%20') %>" 
+                            alt="<%= product.productName %>" 
+                            class="product-img-order">
+                    
+                            <div class="product-details-order">
+                                <h6><%= product.productName %></h6>
+                            
+                                <% if (order.paymentDetails.method !== "COD") { %> 
+                                    <% if (order.refund && order.refundMethod) { %>
+                                        <p style="color: red; font-weight: bold;">Order Cancelled</p>
+                                        <p>Refund: <%= order.refundMethod ? `Refund given by ${order.refundMethod}` : "Refund pending" %></p>
+                                    <% } else { %>
+                                        <p style="color: red; font-weight: bold;">Order Cancelled</p>
+                                        <p>Refund: Refund pending</p>
+                                    <% } %>
+                                <% } else { %>
+                                    <p style="color: red; font-weight: bold;">Order Cancelled</p>
+                                <% } %>                            
+                            </div> 
+                    </div>                    
+                <% }); %>
+                <% if (order.products.length > 2) { %>
+                    <div class="more-products">+<%= order.products.length - 2 %> more</div>
+                <% } %>
+            </div>
+        </div>
+    <% }); %>
+    <div class="pagination">
+        <% if (currentPage > 1) { %>
+            <a href="javascript:void(0);" onclick="fetchOrders('cancelledOrders', <%= currentPage - 1 %>)">Previous</a>
+        <% } %>
+        
+            <% for (let i = 1; i <= totalPagesCancelled; i++) { %>
+                <% if (i === currentPage) { %>
+                    <span><%= i %></span>
+                <% } else { %>
+                    <a href="javascript:void(0);" onclick="fetchOrders('cancelledOrders', <%= i %>)"><%= i %></a>
+
+                <% } %>
+            <% } %>
+        
+            <% if (currentPage < totalPagesCancelled) { %>
+                <a href="javascript:void(0);" onclick="fetchOrders('cancelledOrders', <%= currentPage + 1 %>)">Next</a>
+            <% } %>
+    </div>
+</div>
+<script>
+function showTab(tabId) {
+    // Hide all tab contents
+    document.querySelectorAll(".tab-content").forEach(el => el.style.display = "none");
+
+    // Show the selected tab
+    document.getElementById(tabId).style.display = "flex";
+
+    // Update active tab button styling
+    document.querySelectorAll(".tab-link").forEach(btn => btn.classList.remove("active"));
+    event.target.classList.add("active");
+}
+function fetchOrders(tab, page) {
+    fetch(`/product/orders?tab=${tab}&page=${page}`, { cache: "no-store" }) 
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server Error: ${response.status} - ${response.statusText}`);
+            }
+            return response.text();
+        })
+        .then(html => {
+            console.log("Fetched HTML:", html);
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+            const newTabContent = doc.getElementById(tab);
+
+            if (!newTabContent) {
+                console.error(`Error: No element with ID '${tab}' found in response.`);
+                return;
+            }
+
+            // Update the correct tab
+            const tabElement = document.getElementById(tab);
+            tabElement.innerHTML = newTabContent.innerHTML;
+
+            // Hide all tab contents first
+            document.querySelectorAll('.tab-content').forEach(tabContent => {
+                tabContent.style.display = 'none';
+            });
+
+            // Display the updated tab
+            tabElement.style.display = "block";
+            tabElement.style.width = "100%";
+            tabElement.style.textAlign = "center";
+
+            // Reapply layout styles after AJAX update
+            document.querySelectorAll('.order-card').forEach(card => {
+                card.style.display = "flex";
+                card.style.flexDirection = "column";
+                card.style.alignItems = "center";
+                card.style.justifyContent = "center";
+                card.style.padding = "15px";
+                card.style.borderRadius = "10px";  // Fixed syntax
+                card.style.boxShadow = "0px 4px 6px rgba(0, 0, 0, 0.1)";
+                card.style.margin = "auto auto 20px";
+                card.style.width = "100%";
+                card.style.maxWidth = "600px";
+               
+            });
+             
+        })
+        .catch(error => console.error("Error fetching orders:", error));
+}
+
+
+
+
+function filterOrders() {
+    const filterValue = document.getElementById("timeFilter").value;
+    window.location.href = `/orders?time=${filterValue}`;
+}
+
+function redirectToOrder(orderId) {
+        window.location.href = `/product/order/${orderId}`;
+    }
+</script>
+
+
+</body>
+</html>

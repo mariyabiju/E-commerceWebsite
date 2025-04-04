@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - User Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style_admin.css">
+</head>
+<body>
+
+    <!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">Admin Panel</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="#">Account</a></li>
+        <li class="nav-item"><a class="nav-link logout-btn" href="#">Logout</a></li>
+      </ul>
+    </div>
+</nav>
+
+<!-- Sidebar + Main Content -->
+<div class="d-flex">
+    <nav class="bg-dark text-white p-3" id="sidebar">
+      <ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/dashboard/sales">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/users">User Management</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/category">Category Management</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/products">Product Management</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/offer">Offer Management</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/coupons">Coupon Management</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/ordermanage">Order Management</a></li>
+      </ul>
+    </nav>
+
+        <div class="container mt-4">
+            <h2 class="text-center mb-4">Coupon Management</h2> 
+
+            <div class="d-flex justify-content-end mb-3">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#couponModal">Create Coupon</button>
+            </div>
+
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Discount Type</th>
+                        <th>Value</th>
+                        <th>Valid From</th>
+                        <th>Valid To</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% coupons.forEach(coupon => { 
+                        let today = new Date();
+                        let status = "Active";
+                        
+                        if (coupon.validTo && coupon.validTo < today) {
+                            status = "Expired";
+                        } else if (!coupon.isActive) {
+                            status = "Disabled";
+                        }
+            
+                        if (coupon.isDelete) {
+                            status = "Deleted";
+                        }
+                    %>
+                        <tr>
+                            <td><%= coupon.code %></td>
+                            <td><%= coupon.discountType %></td>
+                            <td><%= coupon.discountValue %></td>
+                            <td><%= coupon.validFrom ? coupon.validFrom.toDateString() : "N/A" %></td>
+                            <td><%= coupon.validTo ? coupon.validTo.toDateString() : "N/A" %></td>
+                            <td><%= status %></td>
+                            <td>
+                                <!-- Edit Button -->
+                                <button class="btn btn-warning btn-sm edit-btn" data-id="<%= coupon._id %>">Edit</button>
+            
+                                <!-- Disable/Enable Button (Only if not Expired or Deleted) -->
+                                <% if (coupon.isActive) { %>
+                                    <button class="btn btn-secondary btn-sm toggle-status-btn" data-id="<%= coupon._id %>" data-status="false">Disable</button>
+                                <% } else { %>
+                                    <button class="btn btn-success btn-sm toggle-status-btn" data-id="<%= coupon._id %>" data-status="true">Enable</button>
+                                <% } %>
+                            
+            
+                                <!-- Delete/Retrieve Button -->
+                                <% if (coupon.isDelete) { %>
+                                    <button class="btn btn-success btn-sm toggle-delete-btn" data-id="<%= coupon._id %>" data-delete="true">Retrieve</button>
+                                <% } else { %>
+                                    <button class="btn btn-danger btn-sm toggle-delete-btn" data-id="<%= coupon._id %>" data-delete="false">Delete</button>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+            
+            
+            <div class="modal fade" id="couponModal" tabindex="-1" aria-labelledby="couponModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Create Coupon</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form action="/admin/add-coupon" method="POST">
+                            <div class="modal-body">
+                                <!-- User Type -->
+                                <div class="mb-3">
+                                    <label>User Type</label>
+                                    <select class="form-control" name="userType" id="userType">
+                                        <option value="admin">Admin</option>
+                                        <option value="newUser">New User</option>
+                                        <option value="newUser">Referral</option>
+                                    </select>
+                                </div>
+            
+                                <!-- Coupon Code -->
+                                <div class="mb-3">
+                                    <label>Coupon Code</label>
+                                    <input type="text" class="form-control" name="code" id="couponCode" required>
+                                </div>
+            
+                                <!-- Coupon Description -->
+                                <div class="mb-3">
+                                    <label>Coupon Description</label>
+                                    <input type="text" class="form-control" name="description" required>
+                                </div>
+            
+                                <!-- Discount Type -->
+                                <div class="mb-3">
+                                    <label>Discount Type</label>
+                                    <select class="form-control" name="discountType">
+                                        <option value="percentage">Percentage</option>
+                                        <option value="fixed">Fixed Amount</option>
+                                    </select>
+                                </div>
+            
+                                <!-- Discount Value -->
+                                <div class="mb-3">
+                                    <label>Discount Value</label>
+                                    <input type="number" class="form-control" name="discountValue" required>
+                                </div>
+            
+                                <!-- Min Purchase -->
+                                <div class="mb-3">
+                                    <label>Min Purchase (Optional)</label>
+                                    <input type="number" class="form-control" name="minPurchase">
+                                </div>
+            
+                                <!-- Valid From -->
+                                <div class="mb-3">
+                                    <label>Valid From</label>
+                                    <input type="date" class="form-control" name="validFrom" id="validFrom">
+                                </div>
+            
+                                <!-- Valid To -->
+                                <div class="mb-3">
+                                    <label>Valid To</label>
+                                    <input type="date" class="form-control" name="validTo" id="validTo">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Create Coupon</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="editCouponModal" tabindex="-1" aria-labelledby="editCouponModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit Coupon</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form id="editCouponForm">
+                            <div class="modal-body">
+                                <input type="hidden" id="editCouponId"> <!-- Store ID here -->
+            
+                                <div class="mb-3">
+                                    <label>Coupon Code</label>
+                                    <input type="text" class="form-control" id="editCouponCode" name="code" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label>Coupon Description</label>
+                                    <input type="text" class="form-control" id="editDescription" name="description" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label>Discount Value</label>
+                                    <input type="number" class="form-control" id="editDiscountValue" name="discountValue" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label>Min Purchase</label>
+                                    <input type="number" class="form-control" id="editMinPurchase" name="minPurchase">
+                                </div>
+                                <div class="mb-3">
+                                    <label>Valid From</label>
+                                    <input type="date" class="form-control" id="editValidFrom" name="validFrom">
+                                </div>
+                                <div class="mb-3">
+                                    <label>Valid To</label>
+                                    <input type="date" class="form-control" id="editValidTo" name="validTo">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Update Coupon</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <% if (messages.success) { %>
+                <div id="flashMessage" class="custom-flash">
+                    <i class="bi bi-info-circle"></i>
+                    <%= messages.success %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <% } %>
+            <% if (messages.error) { %>
+                <div id="flashMessage" class="custom-flash">
+                    <i class="bi bi-info-circle"></i>
+                    <%= messages.error %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <% } %>
+
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            document.getElementById("userType").addEventListener("change", function () {
+                let userType = this.value;
+                let validFromInput = document.getElementById("validFrom");
+                let validToInput = document.getElementById("validTo");
+        
+                // Disable date inputs for new users since their coupon applies automatically
+                if (userType === "newUser") {
+                    validFromInput.value = "";
+                    validToInput.value = "";
+                    validFromInput.disabled = true;
+                    validToInput.disabled = true;
+                } else {
+                    validFromInput.disabled = false;
+                    validToInput.disabled = false;
+                }
+            });
+
+            document.addEventListener("DOMContentLoaded", function () {
+        document.querySelector(".logout-btn").addEventListener("click", function (e) {
+            e.preventDefault();
+            Swal.fire({
+                title: "Are you sure?",
+                text: "You will be logged out!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Yes, Logout!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch("/admin/logout")
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                window.location.href = "/admin/login"; // Redirect to admin login
+                            }
+                        })
+                        .catch(error => console.error("Error:", error));
+                }
+            });
+        });
+
+        // Auto Logout when session expires
+        function checkSessionExpiry() {
+            fetch("/admin/check-session")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.expired) {
+                        Swal.fire({
+                            title: "Session Expired",
+                            text: "Log in to continue",
+                            icon: "info",
+                            confirmButtonText: "OK"
+                        }).then(() => {
+                            window.location.href = "/admin/login";
+                        });
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+        }
+
+        setInterval(checkSessionExpiry, 60000); // Check session expiry every 1 minute
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+// EDIT COUPON
+document.querySelectorAll(".edit-btn").forEach(button => {
+    button.addEventListener("click", function () {
+        let couponId = this.getAttribute("data-id");
+
+        fetch(`/admin/get-coupon/${couponId}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("editCouponId").value = data._id;
+                document.getElementById("editCouponCode").value = data.code;
+                document.getElementById("editDescription").value = data.description;
+                document.getElementById("editDiscountValue").value = data.discountValue;
+                document.getElementById("editMinPurchase").value = data.minPurchase || "";
+                document.getElementById("editValidFrom").value = data.validFrom ? new Date(data.validFrom).toISOString().split("T")[0] : "";
+                document.getElementById("editValidTo").value = data.validTo ? new Date(data.validTo).toISOString().split("T")[0] : "";
+                new bootstrap.Modal(document.getElementById("editCouponModal")).show();
+            })
+            .catch(error => console.error("Error fetching coupon:", error));
+    });
+});
+
+document.getElementById("editCouponForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    let couponId = document.getElementById("editCouponId").value;
+
+    fetch(`/admin/update-coupon/${couponId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            code: document.getElementById("editCouponCode").value,
+            description: document.getElementById("editDescription").value,
+            discountValue: document.getElementById("editDiscountValue").value,
+            minPurchase: document.getElementById("editMinPurchase").value,
+            validFrom: document.getElementById("editValidFrom").value,
+            validTo: document.getElementById("editValidTo").value
+        })
+    }).then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              Swal.fire({
+                  icon: "success",
+                  title: "Coupon Updated!",
+                  text: "The coupon details have been updated successfully.",
+                  confirmButtonColor: "#3085d6",
+              }).then(() => window.location.reload());
+          }
+      }).catch(error => console.error("Error updating coupon:", error));
+});
+
+// TOGGLE ACTIVE STATUS
+document.querySelectorAll(".toggle-status-btn").forEach(button => {
+    button.addEventListener("click", function () {
+        let couponId = this.getAttribute("data-id");
+        let newStatus = this.getAttribute("data-status") === "true";
+        let actionText = newStatus ? "activate" : "deactivate";
+
+        Swal.fire({
+            title: `Are you sure?`,
+            text: `Do you want to ${actionText} this coupon?`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: `Yes, ${actionText} it!`
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/admin/toggle-status/${couponId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ isActive: newStatus })
+                }).then(() => {
+                    Swal.fire({
+                        icon: "success",
+                        title: `Coupon ${newStatus ? "Activated" : "Deactivated"}!`,
+                        confirmButtonColor: "#3085d6",
+                    }).then(() => window.location.reload());
+                });
+            }
+        });
+    });
+});
+
+// SOFT DELETE
+
+document.querySelectorAll(".toggle-delete-btn").forEach(button => {
+    button.addEventListener("click", function () {
+        let couponId = this.getAttribute("data-id");
+        let newDeleteStatus = this.getAttribute("data-delete") === "true";
+        let actionText = newDeleteStatus ? "retrieve" : "delete";
+
+        Swal.fire({
+            title: `Are you sure?`,
+            text: `Do you want to ${actionText} this coupon?`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: `Yes, ${actionText} it!`
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/admin/delete-coupon/${couponId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ isDelete: newDeleteStatus })
+                }).then(() => {
+                    Swal.fire({
+                        icon: "success",
+                        title: `Coupon ${newDeleteStatus ? "Retrieved" : "Deleted"}!`,
+                        confirmButtonColor: "#3085d6",
+                    }).then(() => window.location.reload());
+                });
+            }
+        });
+    });
+});
+
+});
+
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - User Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style_admin.css">
+    
+</head>
+<body>
+
+    <!-- Navbar -->
+        <!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">Admin Panel</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="#">Account</a></li>
+        <li class="nav-item"><a class="nav-link logout-btn" href="#">Logout</a></li>
+      </ul>
+    </div>
+</nav>
+
+<!-- Sidebar + Main Content -->
+<div class="d-flex">
+    <nav class="bg-dark text-white p-3" id="sidebar">
+      <ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/dashboard/sales">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/users">User Management</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/category">Category Management</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/products">Product Management</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/offer">Offer Management</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/coupons">Coupon Management</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/ordermanage">Order Management</a></li>
+      </ul>
+    </nav>
+
+        <div class="container mt-4">
+            <h2 class="text-center mb-4">Offer Management</h2>
+        
+            <div class="d-flex justify-content-end mb-3">
+                <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addOfferModal">Add Offer</button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#bannerModalPop">Create Banner</button>
+            </div>
+        
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered text-center">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Offer Name</th>
+                            <th>Offer Type</th>
+                            <th>Active From</th>
+                            <th>Expires On</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% offers.forEach(offer => { %>
+                            <tr>
+                                <td><%= offer.offerName %></td>
+                                <td><%= offer.type %></td>
+                                <td><%= offer.validFrom %></td>  
+                                <td><%= offer.validTo %></td> 
+                                <td>
+                                    <% if (offer.isDeleted) { %>
+                                        <span class="badge bg-warning">Blocked</span>
+                                    <% } else if (new Date(offer.endDate) < new Date()) { %>
+                                        <span class="badge bg-danger">Expired</span>
+                                    <% } else { %>
+                                        <span class="badge bg-success">Active</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <button class="btn btn-warning edit-offer-btn" data-id="<%= offer._id %>">Edit</button>                                    
+                                    <button class="btn toggle-offer-btn" data-id="<%= offer._id %>" 
+                                        data-status="<%= offer.isDeleted ? 'restore' : 'block' %>">
+                                        <%= offer.isDeleted ? 'Restore' : 'Block' %>
+                                    </button>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                    
+                </table>
+            </div>
+
+            <div class="pagination d-flex justify-content-center mt-4">
+                <% if (totalPages > 1) { %>
+                    <nav>
+                        <ul class="pagination">
+                            <% if (currentPage > 1) { %>
+                                <li class="page-item">
+                                    <a class="page-link" href="/admin/offer?page=<%= currentPage - 1 %>">Previous</a>
+                                </li>
+                            <% } %>
+            
+                            <% for (let i = 1; i <= totalPages; i++) { %>
+                                <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                    <a class="page-link" href="/admin/offer?page=<%= i %>"><%= i %></a>
+                                </li>
+                            <% } %>
+            
+                            <% if (currentPage < totalPages) { %>
+                                <li class="page-item">
+                                    <a class="page-link" href="/admin/offer?page=<%= currentPage + 1 %>">Next</a>
+                                </li>
+                            <% } %>
+                        </ul>
+                    </nav>
+                <% } %>
+            </div>
+            
+        </div>
+        
+        
+        <div class="modal fade" id="addOfferModal" tabindex="-1" aria-labelledby="addOfferModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add Offer</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="offerForm" action="/admin/add-offer" method="POST">
+                        <div class="modal-body">
+                            <!-- Offer Name -->
+                            <div class="mb-3">
+                                <label class="form-label">Offer Name</label>
+                                <input type="text" class="form-control" name="name" required>
+                            </div>
+                    
+                            <!-- Offer Type -->
+                            <div class="mb-3">
+                                <label class="form-label">Type</label>
+                                <select class="form-control" name="type" id="offerType">
+                                    <option value="category">Category-wise</option>
+                                    <option value="product">Product-wise</option>
+                                </select>
+                            </div>
+                            <!-- Product Filter Dropdown -->
+                            <div class="mb-3">
+                                <label class="form-label">Filter Products</label>
+                                <select class="form-control" id="productFilter">
+                                    <option value="">Select</option>
+                                    <option value="category">Category</option>
+                                    <option value="new">New Arrivals</option>
+                                    <option value="color">Color</option>
+                                </select>
+                            </div>
+                            <!-- Choose Category -->
+                            <div class="mb-3" id="categoryFilterDiv" style="display: none;">
+                                <label class="form-label">Select Category</label>
+                                <select class="form-control" id="categorySelect">
+                                    <option value="">All</option> 
+                                    <% categories.forEach(category => { %>
+                                        <option value="<%= category._id %>"><%= category.name %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                    
+                                   <!-- Color Selection (Hidden Initially) -->
+                                   <div class="mb-3" id="colorFilterDiv" style="display: none;">
+                                    <label class="form-label">Select Color</label>
+                                    <select class="form-control" id="colorSelect">
+                                        <% colors.forEach(color => { %>
+                                            <option value="<%= color %>"><%= color %></option>
+                                        <% }) %>
+                                    </select>
+                                </div>
+
+                            <!-- Product List (Checkboxes Updated Dynamically) -->
+                            <div class="mb-3" id="productCheckboxes">
+                                <label class="form-label">Choose Product</label>
+                                <div id="productList"></div>
+                            </div>
+
+                            <!-- Offer Type (Percentage or Fixed Value) -->
+                            <div class="mb-3">
+                                <label class="form-label">Offer Type</label>
+                                <select class="form-control" name="offerType" id="offerTypeSelect" required>
+                                    <option value="percentage">Percentage</option>
+                                    <option value="value">Fixed Value</option>
+                                </select>
+                            </div>
+                    
+                            <!-- Offer Value (Percentage or Fixed Value) -->
+                            <div class="mb-3">
+                                <label class="form-label">Offer Value </label>
+                                <input type="number" class="form-control" name="value" required>
+                            </div>
+                    
+                            <!-- Valid From -->
+                            <div class="mb-3">
+                                <label class="form-label">Valid From</label>
+                                <input type="date" class="form-control" name="validFrom" required>
+                            </div>
+                    
+                            <!-- Valid To -->
+                            <div class="mb-3">
+                                <label class="form-label">Valid To</label>
+                                <input type="date" class="form-control" name="validTo" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Create Offer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <% if (messages.success) { %>
+            <div id="flashMessage" class="custom-flash">
+                <i class="bi bi-info-circle"></i>
+                <%= messages.success %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <% } %>
+        <% if (messages.error) { %>
+            <div id="flashMessage" class="custom-flash">
+                <i class="bi bi-info-circle"></i>
+                <%= messages.error %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <% } %>
+        <!-- Bootstrap Modal for Confirmation -->
+<div class="modal fade" id="bannerModal" tabindex="-1" aria-labelledby="bannerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bannerModalLabel">Create Banner</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Do you want to create a banner for this offer?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="createBannerBtn">Yes, Create</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+  <!--popup banner modal-->
+  <!-- Banner Modal -->
+<div class="modal fade" id="bannerModalPop" tabindex="-1" aria-labelledby="bannerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Banner</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="bannerForm" action="/admin/create-banner" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <!-- Select Offer -->
+                    <select class="form-control" name="offerId" required>
+                        <% offers.forEach(offer => { %>
+                            <option value="<%= offer._id %>" 
+                                data-valid-from="<%= new Date(offer.startDate).toISOString().split('T')[0] %>" 
+                                data-valid-to="<%= new Date(offer.endDate).toISOString().split('T')[0] %>">
+                                <%= offer.offerName %>
+                            </option>
+                        <% }) %>
+                    </select>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Banner Start Date</label>
+                        <input type="date" class="form-control" name="startDate" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Banner End Date</label>
+                        <input type="date" class="form-control" name="endDate" readonly>
+                    </div>
+                    <!-- Upload Banner Image -->
+                    <div class="mb-3">
+                        <label class="form-label">Upload Banner Image</label>
+                        <input type="file" class="form-control" name="bannerImage" accept="image/*" required>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Create Banner</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editOfferModal" tabindex="-1" aria-labelledby="editOfferModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Offer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editOfferForm">
+                <div class="modal-body">
+                    <input type="hidden" id="editOfferId">
+
+                    <div class="mb-3">
+                        <label class="form-label">Offer Name</label>
+                        <input type="text" class="form-control" id="editOfferName" name="name" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <select class="form-control" id="editOfferType" name="type">
+                            <option value="category">Category-wise</option>
+                            <option value="product">Product-wise</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Offer Type</label>
+                        <select class="form-control" id="editOfferTypeSelect" name="offerType" required>
+                            <option value="percentage">Percentage</option>
+                            <option value="value">Fixed Value</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Offer Value</label>
+                        <input type="number" class="form-control" id="editOfferValue" name="value" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Valid From</label>
+                        <input type="date" class="form-control" id="editValidFrom" name="validFrom" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Valid To</label>
+                        <input type="date" class="form-control" id="editValidTo" name="validTo" required>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Update Offer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+        
+        <script>
+            // Filter products based on selected category
+            document.addEventListener("DOMContentLoaded", function () {
+    console.log("DOM is fully loaded");
+
+
+    // Change offer value label dynamically
+    document.getElementById('offerTypeSelect').addEventListener('change', function () {
+        let offerValueLabel = document.getElementById('offerValueLabel');
+        offerValueLabel.innerText = this.value === "percentage" ? "Percentage" : "Fixed Value";
+    });
+
+    
+            
+        
+            // Change Offer Value Label Based on Offer Type
+            document.getElementById('offerType').addEventListener('change', function () {
+                let offerValueLabel = document.getElementById('offerValueLabel');
+                offerValueLabel.innerText = this.value === "category" ? "Percentage" : "Fixed Value";
+            });
+
+
+
+        
+            
+    const productFilter = document.getElementById("productFilter");
+    const categoryFilterDiv = document.getElementById("categoryFilterDiv");
+    const colorFilterDiv = document.getElementById("colorFilterDiv");
+    const productList = document.getElementById("productList");
+    const categorySelect = document.getElementById("categorySelect");
+    const colorSelect = document.getElementById("colorSelect");
+
+    const allProducts = <%- JSON.stringify(products) %>;
+const newArrivals = <%- JSON.stringify(newArrivals) %>;
+
+
+    productFilter.addEventListener("change", function () {
+        const selectedFilter = this.value;
+
+        // Hide all additional filters
+        categoryFilterDiv.style.display = "none";
+        colorFilterDiv.style.display = "none";
+
+        // Show relevant filter options
+        if (selectedFilter === "category") {
+            categoryFilterDiv.style.display = "block";
+        } else if (selectedFilter === "new") {
+            displayProducts(newArrivals);
+        } else if (selectedFilter === "color") {
+            colorFilterDiv.style.display = "block";
+        } else {
+            productList.innerHTML = ""; // Clear product list
+        }
+    });
+
+    // When a category is selected, filter products by category
+    categorySelect.addEventListener("change", function () {
+    const selectedCategory = this.value;
+
+    if (selectedCategory === "") {
+        displayProducts(allProducts); // Show all products if "All" is selected
+    } else {
+        const filteredProducts = allProducts.filter(product => product.category.toString() === selectedCategory);
+        displayProducts(filteredProducts);
+    }
+});
+
+
+    // When a color is selected, filter products by color
+    colorSelect.addEventListener("change", function () {
+        const selectedColor = this.value;
+        const filteredProducts = allProducts.filter(product => 
+            product.variants.some(variant => variant.color === selectedColor)
+        );
+        displayProducts(filteredProducts);
+    });
+
+    function displayProducts(products) {
+        productList.innerHTML = "";
+        products.forEach(product => {
+            const checkbox = `
+                <div class="form-check product">
+                    <input class="form-check-input" type="checkbox" name="products" value="${product._id}" id="product_${product._id}">
+                    <label class="form-check-label" for="product_${product._id}">
+                        ${product.productName} - ${product.variants.length > 0 ? product.variants[0].color : 'No Color'}
+                    </label>
+                </div>`;
+            productList.innerHTML += checkbox;
+        });
+    }
+
+     
+
+
+         // Auto-hide flash message after 3 seconds
+         setTimeout(() => {
+                const flashMessage = document.getElementById('flashMessage');
+                if (flashMessage) {
+                    flashMessage.classList.remove("show");
+                    flashMessage.classList.add("fade");
+                    setTimeout(() => {
+                    flashMessage.remove();
+                showBannerConfirmation(); // Call function to show confirmation popup
+                }, 500);
+                }
+            }, 3000);
+
+
+            function showBannerConfirmation() {
+        var bannerModal = new bootstrap.Modal(document.getElementById('bannerModalPop'));
+        bannerModal.show();
+
+        document.getElementById('createBannerBtn').addEventListener('click', function () {
+    Swal.fire({
+        title: "Redirecting...",
+        text: "Redirecting to banner creation page...",
+        icon: "info",
+        confirmButtonText: "OK"
+    }).then(() => {
+        bannerModal.hide();
+    });
+});
+    }
+    document.querySelector('select[name="offerId"]').addEventListener('change', function () {
+    const selectedOffer = this.options[this.selectedIndex]; // Get selected option
+    const startDate = selectedOffer.getAttribute('data-valid-from'); // Get validFrom date
+    const endDate = selectedOffer.getAttribute('data-valid-to'); // Get validTo date
+
+    if (startDate && endDate) {
+        document.querySelector('input[name="startDate"]').value = startDate;
+        document.querySelector('input[name="endDate"]').value = endDate;
+    }
+});
+
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".edit-offer-btn").forEach(button => {
+        button.addEventListener("click", async function () {
+            const offerId = this.dataset.id;
+
+            // Fetch offer details
+            try {
+                const response = await fetch(`/admin/offers/${offerId}`);
+                const offer = await response.json();
+
+                // Populate modal fields
+                document.getElementById("editOfferId").value = offer._id;
+                document.getElementById("editOfferName").value = offer.offerName;
+                document.getElementById("editOfferType").value = offer.type;
+                document.getElementById("editOfferTypeSelect").value = offer.offerType;
+                document.getElementById("editOfferValue").value = offer.offerValue;
+                document.getElementById("editValidFrom").value = offer.startDate.split("T")[0];
+                document.getElementById("editValidTo").value = offer.endDate.split("T")[0];
+
+                // Show modal
+                const editModal = new bootstrap.Modal(document.getElementById("editOfferModal"));
+                editModal.show();
+            } catch (error) {
+                console.error("Error fetching offer details:", error);
+            }
+        });
+    });
+
+    // Handle form submission
+    document.getElementById("editOfferForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const offerId = document.getElementById("editOfferId").value;
+        const updatedOffer = {
+            offerName: document.getElementById("editOfferName").value,
+            type: document.getElementById("editOfferType").value,
+            offerType: document.getElementById("editOfferTypeSelect").value,
+            offerValue: document.getElementById("editOfferValue").value,
+            startDate: document.getElementById("editValidFrom").value,
+            endDate: document.getElementById("editValidTo").value
+        };
+
+        try {
+            const response = await fetch(`/admin/edit-offer/${offerId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updatedOffer)
+            });
+
+            if (response.ok) {
+        Swal.fire({
+            title: "Success!",
+            text: "Offer updated successfully!",
+            icon: "success",
+            confirmButtonText: "OK"
+        }).then(() => {
+            location.reload();
+        });
+    } else {
+        Swal.fire({
+            title: "Error!",
+            text: "Failed to update offer.",
+            icon: "error",
+            confirmButtonText: "OK"
+        });
+    }
+} catch (error) {
+            console.error("Error updating offer:", error);
+        }
+    });
+});
+ 
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".toggle-offer-btn").forEach(button => {
+        button.addEventListener("click", async function () {
+            const offerId = this.dataset.id;
+            const action = this.dataset.status; // "block" or "restore"
+
+            if (confirm(`Are you sure you want to ${action} this offer?`)) {
+                try {
+                    const response = await fetch(`/admin/toggle-offer/${offerId}`, { method: "POST" });
+
+                    if (response.ok) {
+        Swal.fire({
+            title: "Success!",
+            text: `Offer ${action}ed successfully!`,
+            icon: "success",
+            confirmButtonText: "OK"
+        }).then(() => {
+            location.reload();
+        });
+    } else {
+        Swal.fire({
+            title: "Error!",
+            text: `Failed to ${action} offer.`,
+            icon: "error",
+            confirmButtonText: "OK"
+        });
+    }
+}  catch (error) {
+                    console.error(`Error ${action}ing offer:`, error);
+                }
+            }
+        });
+    });
+});
+document.addEventListener("DOMContentLoaded", function () {
+        document.querySelector(".logout-btn").addEventListener("click", function (e) {
+            e.preventDefault();
+            Swal.fire({
+                title: "Are you sure?",
+                text: "You will be logged out!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Yes, Logout!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch("/admin/logout")
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                window.location.href = "/admin/login"; // Redirect to admin login
+                            }
+                        })
+                        .catch(error => console.error("Error:", error));
+                }
+            });
+        });
+
+        // Auto Logout when session expires
+        function checkSessionExpiry() {
+            fetch("/admin/check-session")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.expired) {
+                        Swal.fire({
+                            title: "Session Expired",
+                            text: "Log in to continue",
+                            icon: "info",
+                            confirmButtonText: "OK"
+                        }).then(() => {
+                            window.location.href = "/admin/login";
+                        });
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+        }
+
+        setInterval(checkSessionExpiry, 60000); // Check session expiry every 1 minute
+    });
+        </script>
+        
+        
+        <!-- Bootstrap Bundle with Popper -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="/js/main.js"></script>
+
+</body>
+</html> 

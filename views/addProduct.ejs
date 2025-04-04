@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - User Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style_admin.css">
+</head>
+<body>
+
+    <!-- Navbar -->
+        <!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">Admin Panel</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="#">Account</a></li>
+        <li class="nav-item"><a class="nav-link logout-btn" href="#">Logout</a></li>
+      </ul>
+    </div>
+</nav>
+
+<!-- Sidebar + Main Content -->
+<div class="d-flex">
+    <nav class="bg-dark text-white p-3" id="sidebar">
+      <ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/dashboard/sales">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/users">User Management</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/category">Category Management</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/products">Product Management</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/offer">Offer Management</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/coupons">Coupon Management</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/admin/ordermanage">Order Management</a></li>
+      </ul>
+    </nav>
+
+    
+    <div class="container mt-4">
+        <h2 class="text-center">Product Details</h2>
+
+        <!-- Product Form -->
+        <form id="productForm" action="/admin/products/add" method="POST" enctype="multipart/form-data">
+            
+            <!-- General Information -->
+            <div class="card p-3 mb-3">
+                <h4>General Information</h4>
+                <label>Product Name</label>
+                <input type="text" name="productName" class="form-control" required>
+
+                <label>Description</label>
+                <textarea name="description" class="form-control" required></textarea>
+
+                <label>Category</label>
+                <select name="category_id" class="form-control" required>
+                    <% categories.forEach(category => { %>
+                        <option value="<%= category._id %>"><%= category.name %></option>
+                    <% }) %>
+                </select>
+
+                <label>Tags (comma-separated)</label>
+                <input type="text" name="tags" class="form-control">
+            </div>
+
+            <!-- Size Chart Upload -->
+            <div class="card p-3 mb-3">
+                <h4>Size Chart</h4>
+                <input type="file" id="sizeChartInput" name="sizeChart" class="form-control" accept="image/*">
+            </div>
+
+            <!-- Pricing -->
+            <div class="card p-3 mb-3">
+                <h4>Pricing</h4>
+                <label>Price (₹ INR)</label>
+                <input type="number" name="price" class="form-control" required>
+            </div>
+
+            <!-- Variations -->
+            <div class="card p-3 mb-3">
+                <h4>Variations</h4>
+                <div id="variations-container"></div>
+                <button type="button" class="btn btn-primary mt-2" onclick="addVariation()">Add Variant</button>
+            </div>
+
+            <!-- More Details -->
+            <div class="card p-3 mb-3">
+                <h4>More Details</h4>
+                <label>Brand</label>
+                <input type="text" name="brand" class="form-control">
+
+                <label>Product Details</label>
+                <textarea name="productDetails" class="form-control"></textarea>
+
+                <label>Seller Details</label>
+                <textarea name="sellerDetails" class="form-control"></textarea>
+            </div>
+            <!-- Media (Product Images) -->
+            <div class="card p-3 mb-3">
+                <h4>Media</h4>
+                <input type="file" name="imageUrls" id="imageInput" class="form-control" multiple accept="image/*">
+                
+                <!-- Main Cropping Preview -->
+                <div style="width: 100%; text-align: center;">
+                    <img id="imagePreview" style="max-width: 100%; display: none;">
+                </div>
+                <button type="button" id="closeCropButton" class="btn btn-danger mt-2" style="display: none;">X</button>
+                <button type="button" id="cropButton" class="btn btn-primary mt-2">Crop & Upload</button>
+                <input type="hidden" name="croppedImage" id="croppedImage">
+            
+                <!-- Thumbnail Previews -->
+                <div id="imagePreviewContainer" class="d-flex flex-wrap"></div>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn btn-success">Save Product</button>
+            <button type="button" class="btn btn-secondary">Preview</button>
+        </form>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script>
+        function addVariation() {
+    let container = document.getElementById("variations-container");
+    let variationId = Date.now(); 
+
+    let html = `
+        <div class="variation-item p-2 border rounded mb-2" id="variation-${variationId}">
+            <label>Size</label>
+            <select name="variants[size][]" class="form-control">
+                <option value="S">S</option>
+                <option value="M">M</option>
+                <option value="L">L</option>
+                <option value="null">Nil</option>
+            </select>
+
+            <label>Color</label>
+            <input type="text" name="variants[color][]" class="form-control">
+
+            <label>Stock</label>
+            <input type="number" name="variants[stock][]" class="form-control">
+
+            <button type="button" class="btn btn-danger mt-2" onclick="removeVariation(${variationId})">Remove</button>
+        </div>
+    `;
+
+    container.insertAdjacentHTML("beforeend", html);
+}
+
+function removeVariation(id) {
+    document.getElementById(`variation-${id}`).remove();
+}
+
+        function removeVariation(id) {
+        let variationElement = document.getElementById(`variation-${id}`);
+        if (variationElement) {
+            variationElement.remove();
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function () {
+    let selectedImages = []; // Store selected image files
+
+    const imageInput = document.getElementById("imageInput");
+    const imagePreview = document.getElementById("imagePreview");
+    const cropButton = document.getElementById("cropButton");
+    const closeCropButton = document.getElementById("closeCropButton"); // Close button
+    const croppedImageInput = document.getElementById("croppedImage");
+    const previewContainer = document.getElementById("imagePreviewContainer"); // New container for thumbnails
+
+    let cropper;
+
+    imageInput.addEventListener("change", function (event) {
+        const file = event.target.files[0]; // Get the first selected file
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = "block";
+                cropButton.style.display = "inline-block";
+                closeCropButton.style.display = "inline-block"; // Show close button
+
+                // Destroy existing Cropper instance if any
+                if (cropper) {
+                    cropper.destroy();
+                }
+
+                // Initialize Cropper
+                cropper = new Cropper(imagePreview, {
+                    aspectRatio: 560 / 748, // Allows a rectangular crop
+                    viewMode: 2,
+                    autoCropArea: 1
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    cropButton.addEventListener("click", function () {
+        if (!cropper) return;
+
+        const croppedCanvas = cropper.getCroppedCanvas();
+        if (croppedCanvas) {
+            croppedCanvas.toBlob(blob => {
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onloadend = function () {
+                    let croppedImageUrl = reader.result;
+
+                    // Store base64 image data
+                    croppedImageInput.value = croppedImageUrl;
+
+                    // Create a new image file
+                    const file = new File([blob], `cropped-${Date.now()}.jpg`, { type: "image/jpeg" });
+                    selectedImages.push(file);
+
+                    // Update the image preview
+                    displayImages();
+                };
+            }, 'image/jpeg');
+        }
+    });
+
+    closeCropButton.addEventListener("click", function () {
+        imagePreview.style.display = "none";
+        cropButton.style.display = "none";
+        closeCropButton.style.display = "none"; // Hide close button
+       
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+    });
+
+    function displayImages() {
+        previewContainer.innerHTML = ""; // Clear previous thumbnails
+
+        selectedImages.forEach((file, index) => {
+            let imgElement = document.createElement("img");
+            imgElement.src = URL.createObjectURL(file);
+            imgElement.className = "img-thumbnail m-2";
+            imgElement.style.width = "100px";
+
+            let removeBtn = document.createElement("button");
+            removeBtn.innerText = "X";
+            removeBtn.className = "btn btn-danger btn-sm m-1";
+            removeBtn.onclick = function () {
+                selectedImages.splice(index, 1);
+                displayImages();
+            };
+
+            let div = document.createElement("div");
+            div.appendChild(imgElement);
+            div.appendChild(removeBtn);
+            previewContainer.appendChild(div);
+        });
+
+        updateFileInput();
+    }
+
+    function updateFileInput() {
+        let dataTransfer = new DataTransfer();
+
+        // Keep all previously selected images
+        selectedImages.forEach(file => {
+            dataTransfer.items.add(file);
+        });
+
+        // Set the input files to keep all selected images
+        imageInput.files = dataTransfer.files;
+    }
+});
+
+
+    </script>
+
+</body>
+</html>
+    

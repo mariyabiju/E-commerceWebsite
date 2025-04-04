@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wardrobe</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <%- include('partials/navbar') %>
+    <div class="container">
+        <h2>My Wishlist</h2>
+        <div class="row">
+            <% if (wishlistItems.length === 0) { %>
+                <p>No items in your wishlist.</p>
+            <% } else { %>
+                <div class="products productdisplay">
+                    <% wishlistItems.forEach(item => { %>
+                        <% const product = item.productid; %>
+                        <div class="col-lg-3">
+                            <div class="product-card wishlist-card productscard">
+    
+                               <div class="product-image productImg">
+                                <a href="/product/<%= product._id %>"class="product-link" >
+                            <% product.imageUrls.forEach((imageUrl, index) => { %>
+                                <img src="<%= '/uploads/' + imageUrl.replace(/^uploads\\/, '').replace(/\\/g, '/').replace(/ /g, '%20') %>" 
+                                    alt="<%= product.productName %>" 
+                                    class="product-slide <%= index === 0 ? 'active' : '' %>"> 
+                            <% }) %>
+                        </a>
+             
+                        </div>
+                        
+                            <div class="product-details productDetails">
+                                <p class="productBrandname"><%= product.brand %></p>
+                                 <p class="product-name productName"><%= product.productName %></p> 
+        
+                                        <% if (product.discountedPrice && product.discountedPrice < product.price) { %>
+                                            <p class="product-price">
+                                                Rs. <%= product.discountedPrice %>  
+                                                <span class="original-price originalPrice">Rs. <%= product.price %></span> 
+                                                <span class="discount">( <%= product.finalDiscount %>% OFF )</span>
+                                            </p>
+                                        <% } else { %>
+                                            <p class="product-price  productPrice">Rs. <%= product.price %></p>
+                                        <% } %>
+                                        <button class="cart-btn" onclick="showSizeColorAlert('<%= product._id %>')">Add to Cart</button>
+        
+                                        <% if (product.variants.some(v => v.stock === 0)) { %>
+                                            <p class="out-of-stock-text">Out of Stock.Check for another size and color in product details</p>
+                                        <% } %>
+                                    </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+                
+            <% } %>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    
+
+    <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                document.querySelectorAll(".productscard").forEach(card => {
+                    let images = card.querySelectorAll(".product-slide");
+                    let index = 0;
+                    let interval;
+            
+                    card.addEventListener("mouseenter", () => {
+                        if (images.length > 1) { // Only animate if multiple images exist
+                            interval = setInterval(() => {
+                                images.forEach(img => img.classList.remove("active"));
+                                images[index].classList.add("active");
+                                index = (index + 1) % images.length;
+                            }, 1000);
+                            card.dataset.interval = interval;
+                        }
+                    });
+            
+                    card.addEventListener("mouseleave", () => {
+                        clearInterval(interval);
+                        images.forEach(img => img.classList.remove("active"));
+                        images[0].classList.add("active"); // Reset to first image
+                    });
+                })
+            
+            })   
+            function showSizeColorAlert(productId) {
+        Swal.fire({
+            title: "Choose Size & Color",
+            text: "Please go to the product details page to select size and color.",
+            icon: "info",
+            showCancelButton: false,
+            confirmButtonText: "OK"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = `/product/${productId}`;
+            }
+        });
+    }
+    </script>     

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wardrobe</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <%- include('partials/navbar') %>
+
+        <div class="container p-4 otp-box">
+            <div class="or-divider">Email Verification</div>
+            <form id="otpForm">
+                <div class="form-group emailOtp">
+                    <input type="text" id="otpInput" required placeholder="Enter the OTP sent to your email"
+                        maxlength="7" />
+                    <span class="error-message" id="otpError"></span>
+                </div>
+                <input type="hidden" id="emailField"> <!-- Hidden field for email -->
+                <button type="submit" class="btn submitbutton w-50" id="verifyOtp">Verify</button>
+            </form>
+            <p id="timer">Resend OTP in <span id="countdown">30</span> seconds</p>
+            <button id="resendOtp" class="resend-otp" disabled>Resend OTP</button>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                // Extract email from URL query parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const email = urlParams.get('email') || urlParams.get('emailId');
+               
+                // Set the hidden input field's value
+                document.getElementById("emailField").value = email;
+
+                let timeLeft = 30;
+                const countdownElem = document.getElementById("countdown");
+                const resendBtn = document.getElementById("resendOtp");
+                const timer = setInterval(() => {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        countdownElem.textContent = timeLeft;
+                    } else {
+                        clearInterval(timer);
+                        resendBtn.disabled = false;
+                        document.getElementById("timer").style.display = "none";
+                    }
+                }, 1000);
+            });
+
+            document.getElementById("otpForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const urlParams = new URLSearchParams(window.location.search);
+                
+                const source = urlParams.get("source"); 
+                const otp = document.getElementById("otpInput").value;
+                const emailId = document.getElementById("emailField").value;
+                const msg = document.getElementById("otpError");
+               
+
+                try {
+                    const response = await fetch("/otp-verification", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ emailId, otp,source }),
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // Store the success message in localStorage
+                        localStorage.setItem("successMessage", result.message);
+
+                        // Redirect to login page
+                        window.location.replace(result.redirectUrl);
+
+                         // Prevent going back
+                        setTimeout(() => {
+                            window.history.replaceState(null, null, result.redirectUrl);
+                        }, 100);
+                    } else {
+                        // Show error using SweetAlert instead of plain text
+                        msg.textContent = result.message || "Invalid OTP!";
+                        msg.style.color = "white";
+                        msg.style.display = "block";
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                    Swal.fire({
+                        icon: "error",
+                        title: "Something went wrong!",
+                        text: "Please try again later.",
+                        confirmButtonColor: "#d33",
+                        customClass: {
+                            popup: "custom-swal-popup",  // Custom class for the popup
+                            confirmButton: "custom-ok-button", // Custom class for the OK button
+                            icon: "custom-icon" // Custom class for the icon
+                        }
+                    });
+                }
+
+            });
+
+
+            document.getElementById("resendOtp").addEventListener("click", async (e) => {
+                e.preventDefault(); 
+
+                let emailId = document.getElementById("emailField").value;  // Get email from the hidden input field
+                let msg = document.getElementById("otpError");  // Error message container
+
+                if (!emailId) {
+                    msg.textContent = "Email is required to resend OTP!";
+                    msg.style.color = "red";
+                    msg.style.display = "block";
+                    return;
+                }
+
+                try {
+                    const response = await fetch("/resend-otp", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ emailId }),
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        msg.textContent = result.message || "OTP sent successfully!";
+                        msg.style.color = "green";
+                        msg.style.display = "block";
+
+                        // Restart countdown timer
+                        let timeLeft = 30;
+                        document.getElementById("timer").style.display = "block";
+                        document.getElementById("countdown").textContent = timeLeft;
+                        document.getElementById("resendOtp").disabled = true;
+
+                        const timer = setInterval(() => {
+                            if (timeLeft > 0) {
+                                timeLeft--;
+                                document.getElementById("countdown").textContent = timeLeft;
+                            } else {
+                                clearInterval(timer);
+                                document.getElementById("resendOtp").disabled = false;
+                                document.getElementById("timer").style.display = "none";
+                            }
+                        }, 1000);
+                    } else {
+                        msg.textContent = result.message || "Failed to send OTP!";
+                        msg.style.color = "red";
+                        msg.style.display = "block";
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                    Swal.fire({
+                        icon: "error",
+                        title: "Something went wrong!",
+                        text: "Failed to send OTP! Please try again later.",
+                        confirmButtonColor: "#d33",
+                    });
+                }
+            });
+
+
+        </script>
+</body>
+
+</html>

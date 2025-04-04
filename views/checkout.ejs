@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wardrobe</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Dancing+Script:wght@400;700&family=Montserrat:wght@400;700&family=Lora:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/style.css">
+  
+     
+</head>
+
+<body>
+    <%- include('partials/navbar') %>
+    <div class="container checkout-container">
+        <h2 class="text-center">Checkout</h2>
+        <p>No changes are allowed here.If any changes to make in products or address <a href="/product/cartpage">Click here to go to Cart</a></p>
+    
+        <!-- Address Section -->
+        <div class="address-container-checkout">
+            <h5>Delivery Address</h5>
+            <p id="fullname-checkout"><strong><%=fullName %></strong></p>
+            <p  id="address-checkout"><%= address ? `${address.houseName}, ${address.city}, ${address.pin}` : "No address selected" %></p>
+            <p id="phone-checkout">Phone Number :<%=phoneNumber %></strong></p>
+            <p  id="email-checkout">Email :<%=emailId %></p>
+        </div>
+    
+        <div class="row">
+            <!-- Left Side: Products & Payment Options -->
+            <div class="col-md-8">
+                <!-- View Products -->
+                <div class="products-container-checkout">
+                    <h5>Products</h5>
+                    <button id="viewProductsBtn" class="btn btn-danger mb-3">View Products</button>
+    
+                    <div id="productModal" class="modal modal-checkout">
+                        <div class="modal-content-checkout">
+                            <span class="close-checkout" onclick="closeModal()">&times;</span>
+                            <h5>Products in Cart</h5>
+                            <% cart.items.forEach(item => { %>
+                                <div class="product-item-checkout">
+                                    <img src="<%= '/uploads/' +  item.image.replace(/^uploads\\/, '').replace(/\\/g, '/').replace(/ /g, '%20') %>" class="product-img-checkout">
+                                    <div>
+                                        <p class="product-title-checkout"><strong><%= item.productName %></strong></p>
+                                        <p>Size: <%= item.size %></p>
+                                        <p>Color: <%= item.color %></p>
+                                        <p>Quantity: <%= item.quantity %></p>
+                                        <p>Price: ₹<%= item.discountedPrice %></p>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                    <!-- Payment Options -->
+                <div class="accordion payment-container-checkout" id="paymentAccordion">
+                    <h5>Payment Options</h5>
+                    <p>Select any option and click Place order button for order placement</p>
+                
+                    <!-- Cash on Delivery -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingCOD">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCOD" aria-expanded="true" aria-controls="collapseCOD">
+                                Cash on Delivery
+                            </button>
+                        </h2>
+                        <div id="collapseCOD" class="accordion-collapse collapse show" aria-labelledby="headingCOD" data-bs-parent="#paymentAccordion">
+                            <div class="accordion-body">
+                                <label><input type="radio" name="paymentMethod" value="COD"> Select Cash on Delivery</label>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <!-- UPI -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingUPI">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseUPI" aria-expanded="false" aria-controls="collapseUPI">
+                                UPI
+                            </button>
+                        </h2>
+                        <div id="collapseUPI" class="accordion-collapse collapse" aria-labelledby="headingUPI" data-bs-parent="#paymentAccordion">
+                            <div class="accordion-body">
+                                <label><input type="radio" name="paymentMethod" value="upi"> Select UPI Payment</label>
+                                <input type="text" id="upiId" class="form-control mt-2" placeholder="Enter UPI ID (Optional)">
+                            </div>
+                        </div>
+                    </div>
+                
+                    <!-- Debit/Credit Card -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingCard">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCard" aria-expanded="false" aria-controls="collapseCard">
+                                Debit/Credit Card
+                            </button>
+                        </h2>
+                        <div id="collapseCard" class="accordion-collapse collapse" aria-labelledby="headingCard" data-bs-parent="#paymentAccordion">
+                            <div class="accordion-body">
+                                <label>
+                                    <input type="radio" name="paymentMethod" value="card" id="cardPayment"> Select Debit/Credit Card
+                                </label>
+                                
+                            </div>
+                        </div>
+                    </div>
+                
+                    <!-- Wallet -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingWallet">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseWallet" aria-expanded="false" aria-controls="collapseWallet">
+                                Wallet <span id="wallet-balance" class="badge bg-success ms-2">Wallet Balance: ₹<%= walletBalance %></span>
+                            </button>
+                        </h2>
+                        <div id="collapseWallet" class="accordion-collapse collapse" aria-labelledby="headingWallet" data-bs-parent="#paymentAccordion">
+                            <div class="accordion-body">
+                                <label>
+                                    <input type="radio" name="paymentMethod" value="Wallet" id="walletRadio"> Select Wallet Payment
+                                </label>
+                                <p id="wallet-insufficient" class="text-danger" style="display:none;">You have insufficient balance.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>                
+            </div>
+    
+                </div>
+                <!-- Right Side: Bill Summary -->
+            <div class="col-md-4">
+                <div class="bill-summary">
+                    <h4>Bill Summary</h4>
+                    <p>Total MRP: ₹<span id="totalMRP"></span></p>
+                    <p>Total Discount: -₹<span id="totalDiscount"></span></p>
+                    <p>Coupon Discount: -₹<span id="couponDiscountValue"></span></p>
+                    <p>Platform Fee: ₹<span id="platformFee"></span></p>
+                    <p>Shipping Fee:<span id="shippingFee"></span></p>
+                    <p><strong>Final Amount: ₹<span id="finalAmount"></span></strong></p>
+                    <button class="btn btn-danger w-100" id="placeOrder">Place Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function (){
+
+            document.getElementById('viewProductsBtn').addEventListener('click', function() {
+        document.getElementById('productModal').style.display = 'block';
+    });
+
+
+    let billingDetails = JSON.parse(localStorage.getItem("billingDetails"));
+
+    if (billingDetails) {
+        let totalMRP = Number(billingDetails.totalMRP); // Ensure it's a number
+        let totalDiscount = Number(billingDetails.totalDiscount);
+        let couponDiscount = Number(billingDetails.couponDiscount);
+        let platformFee = 20; 
+        let shippingFee = (totalMRP - totalDiscount - couponDiscount < 1999) ? 50 : 0;
+
+        
+        let finalAmount = (totalMRP - totalDiscount - couponDiscount) + shippingFee + platformFee;
+
+        billingDetails.finalAmount = finalAmount;
+        localStorage.setItem("billingDetails", JSON.stringify(billingDetails));
+
+        document.getElementById("totalMRP").innerText = `${totalMRP.toFixed(2)}`;
+        document.getElementById("totalDiscount").innerText = `${totalDiscount.toFixed(2)}`;
+        document.getElementById("couponDiscountValue").innerText = `${couponDiscount.toFixed(2)}`;
+        document.getElementById("platformFee").innerText = `${platformFee.toFixed(2)}`;
+        document.getElementById("shippingFee").innerText = shippingFee === 0 ? "Free" : `${shippingFee.toFixed(2)}`;
+        document.getElementById("finalAmount").innerText = `${finalAmount.toFixed(2)}`;
+    }
+    function closeModal() {
+        document.getElementById('productModal').style.display = 'none';
+    }
+    document.querySelector('input[value="card"]').addEventListener("change", function () {
+    document.getElementById("cardDetails").style.display = "block";
+});
+
+
+    document.getElementById("placeOrder").addEventListener("click", async function () {
+    let selectedPayment = document.querySelector('input[name="paymentMethod"]:checked');
+
+    if (!selectedPayment) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Payment Required',
+            text: 'Please select a payment method to proceed!',
+        });
+        return;
+    }
+
+    
+    // If Wallet is selected, check balance
+    if (selectedPayment.value === "Wallet") {
+        let walletText = document.getElementById("wallet-balance").textContent;
+        let walletBalance = parseFloat(walletText.replace("Wallet Balance: ₹", "").trim()); // Extracting only numeric value
+        let finalAmountText = document.getElementById("finalAmount").textContent.trim();
+        let totalAmount = parseFloat(finalAmountText.replace("₹", "")); 
+
+        console.log("Wallet Balance:", walletBalance);
+        console.log("Final Amount:", totalAmount);
+
+        if (isNaN(walletBalance) || isNaN(totalAmount)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Something went wrong while fetching balance. Please try again.',
+            });
+            return;
+        }
+
+        if (walletBalance < totalAmount) {
+            document.getElementById("wallet-insufficient").style.display = "block"; // Show insufficient balance message
+            Swal.fire({
+                icon: 'error',
+                title: 'Insufficient Wallet Balance',
+                text: 'Your wallet balance is insufficient to place the order. Please choose another payment method or add funds.',
+            });
+            return;
+        } else {
+            document.getElementById("wallet-insufficient").style.display = "none"; // Hide message if sufficient balance
+        }
+    }
+
+   // Function to get text content safely
+function getTextContent(id) {
+    let element = document.getElementById(id);
+    return element ? element.innerText.trim() : null;
+}
+
+// Get basic details
+let fullName = getTextContent("fullname-checkout");
+let phoneNumber = getTextContent("phone-checkout").replace("Phone Number :", "").trim();
+let emailId = getTextContent("email-checkout").replace("Email :", "").trim();
+
+// Extract address details
+let addressText = getTextContent("address-checkout");
+
+let houseName = null, city = null, pin = null;
+
+if (addressText && addressText !== "No address selected") {
+    let addressParts = addressText.split(",").map(part => part.trim()); // Split by comma and trim spaces
+    
+    houseName = addressParts[0] || null;
+    city = addressParts[1] || null;
+    pin = addressParts[2] || null;
+}
+
+// Log values for debugging
+console.log("Full Name:", fullName);
+console.log("House Name:", houseName);
+console.log("City:", city);
+console.log("Pin:", pin);
+console.log("Phone Number:", phoneNumber);
+console.log("Email:", emailId);
+
+    
+
+    let address = { fullName, houseName, city, pin, phoneNumber, emailId };
+
+    let totalMRP = getTextContent("totalMRP");
+    let totalDiscount = getTextContent("totalDiscount");
+    let couponDiscountValue = getTextContent("couponDiscountValue");
+    let platformFee = getTextContent("platformFee");
+    let shippingFee = getTextContent("shippingFee");
+    let finalAmount = getTextContent("finalAmount");
+
+    let orderData = {
+        paymentMethod: selectedPayment.value,
+        address,
+        totalMRP,
+        totalDiscount,
+        couponDiscountValue,
+        platformFee,
+        shippingFee,
+        finalAmount
+    };
+
+    if (selectedPayment.value.toLowerCase() === "card") {
+       
+
+        let options = {
+            key: "<%= razorpayKey %>",
+            amount: parseFloat(orderData.finalAmount) * 100,
+            currency: "INR",
+            name: "Wardrobe",
+            description: "Order Payment",
+            image:"https://images-workbench.99static.com/QdCIPMut9YrCXASus7S5IIx58p0=/99designs-contests-attachments/51/51051/attachment_51051281",
+            handler: async function (response) {
+                console.log("Payment successful:", response);
+                orderData.transactionId = response.razorpay_payment_id;
+
+                let orderResponse = await fetch("/product/place-order", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(orderData)
+                });
+
+                let data = await orderResponse.json();
+                if (orderResponse.ok) {
+                    Swal.fire({
+                icon: 'success',
+                title: 'Congratulations!',
+                text: 'Your order has been placed successfully. Thank you for shopping with Wardrobe!',
+                showCancelButton: true,
+                confirmButtonText: 'View Order Details and Track Order',
+                cancelButtonText: 'Shop More',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "/product/orders";
+                } else {
+                    window.location.href = "/product/home";
+                }  });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Order Failed',
+                        text: data.message || "Something went wrong, please try again.",
+                    });
+                }
+            },
+            prefill: {
+                name: orderData.address.fullName,
+                email: orderData.address.emailId,
+                contact: orderData.address.phoneNumber,
+                method: "card"
+            },
+            theme: {
+                color: "#3399cc"
+            }
+        };
+
+        let rzp1 = new Razorpay(options);
+        rzp1.open();
+    }  
+    else if (selectedPayment.value === "upi") {
+    let upiId = document.getElementById("upiId").value.trim();
+
+    let options = {
+        key: "<%= razorpayKey %>", // Replace with your Razorpay key
+        amount: parseFloat(orderData.finalAmount) * 100, // Convert to paisa
+        currency: "INR",
+        name: "Wardrobe",
+        description: "Order Payment",
+        handler: async function (response) {
+            console.log("Payment successful:", response);
+            orderData.transactionId = response.razorpay_payment_id;
+
+            let orderResponse = await fetch("/product/place-order", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(orderData)
+            });
+
+            let data = await orderResponse.json();
+
+            if (orderResponse.ok) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Congratulations!',
+                    text: 'Your order has been placed successfully.',
+                    confirmButtonText: 'View Order',
+                }).then(() => {
+                    window.location.href = "/product/orders";
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Order Failed',
+                    text: data.message || "Something went wrong, please try again.",
+                });
+            }
+        },
+        payment_capture: 1, 
+        // Force UPI method to open instead of card
+        method: {
+            upi: true, 
+            card: false // Disable card option
+        },
+
+        prefill: {
+            email: orderData.address.emailId,
+            contact: orderData.address.phoneNumber,
+            upi: upiId || "" // Prefill UPI if provided
+        },
+        theme: {
+            color: "#3399cc"
+        }
+    };
+
+    let rzp = new Razorpay(options);
+    rzp.open();
+}
+else {
+        // Handle wallet or other payment methods
+        let response = await fetch("/product/place-order", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(orderData)
+        });
+
+        let data = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Congratulations!',
+                text: 'Your order has been placed successfully. Thank you for shopping with Wardrobe!',
+                showCancelButton: true,
+                confirmButtonText: 'View Order Details and Track Order',
+                cancelButtonText: 'Shop More',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "/product/orders";
+                } else {
+                    window.location.href = "/product/home";
+                }  });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Order Failed',
+                text: data.message || "Something went wrong, please try again.",
+            });
+        }
+    }
+
+});
+
+
+        })
+         
+
+    </script>
+
+</body>
+</html>

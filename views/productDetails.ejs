@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wardrobe</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <%- include('partials/navbar') %>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <% breadcrumbs.forEach((crumb, index) => { %>
+                <li class="breadcrumb-item">
+                    <% if (index === breadcrumbs.length - 1) { %>
+                        <span><%= crumb.name %></span>
+                    <% } else { %>
+                        <a href="<%= crumb.url %>"><%= crumb.name %></a>
+                    <% } %>
+                </li>
+            <% }) %>
+            
+        <span class="current-page"><%= product.productName %></span>
+        </ol>
+      </nav>
+        
+    
+      <div class="container productDetailContainer">
+        <div class="product-container productContainer">
+            <!-- Left Section: Image Gallery -->
+            <div class="left">
+                <div class="main-image-container">
+                    <!-- Left Arrow (Previous Image) -->
+                    <button class="arrowMainImg left-arrow" onclick="changeImage(-1)">&#10094;</button>
+                    
+                    <div class="main-image" onclick="openFullscreen()">
+                        <img id="zoom-img" class="zoom-img" src="/<%= product.imageUrls[0].replace(/\\/g, '/') %>" alt="Product Image">
+                    </div>
+    
+                    <!-- Right Arrow (Next Image) -->
+                    <button class="arrowMainImg right-arrow" onclick="changeImage(1)">&#10095;</button>
+                </div>
+                <!-- Fullscreen Image Preview -->
+                <div id="fullscreen-view" class="fullscreen" onclick="closeFullscreen()" onmousemove="zoomImage(event)">
+                  <span class="close-btn" onclick="closeFullscreen()">&times;</span>
+                  
+                  <!-- Left arrow (previous image) -->
+                  <button class="arrow left-arrow" onclick="changeImage(-1)">&#10094;</button>
+                  
+                  <div class="magnifier-container">
+                      <img id="fullscreen-img" class="fullscreen-img" onclick="toggleZoom()">
+                  </div>
+                
+                  <!-- Right arrow (next image) -->
+                  <button class="arrow right-arrow" onclick="changeImage(1)">&#10095;</button>
+                </div>
+                
+    
+                <!-- Thumbnails below main image -->
+                <div class="image-thumbnails">
+                    <% product.imageUrls.forEach((image, index) => { %>
+                        <img class="thumbnail" src="/<%= image.replace(/\\/g, '/') %>" onclick="changeImageByThumbnail(this, <%= index %>)">
+                    <% }) %>
+                </div>
+            </div>
+    
+            <!-- Right Section: Product Details -->
+            <div class="right">
+                <p class="brand productBrandDetail"><%= product.brand %></p>
+                <h2 class="product-name productNameDetail"><%= product.productName %></h2>
+    
+                <% if (limitedOfferProductIds.includes(product._id.toString())) { %>
+                    <p class="limited-time-deal">⏳Limited Time Deal</p>
+                <% } %>
+                <p class="rating">⭐ <%= averageRating || '0' %>/5</p>
+    
+                <!-- Price & Stock -->
+                <div class="price-rating">
+                    <% if (product.discountedPrice && product.discountedPrice < product.price) { %>
+                        <p class="productPriceDetail">
+                            Rs. <%= product.discountedPrice %>  
+                            <span class=" productDiscountPriceDetail">Rs. <%= product.price %></span> 
+                            <span class="productDiscountDetail">( <%= product.finalDiscount %>% OFF )</span>
+                        </p>
+                    <% } else { %>
+                        <p class="productOriginalPriceDetail">Rs. <%= product.price %></p>
+                    <% } %>
+                </div>
+    
+                <% let totalStock = product.variants.reduce((acc, v) => acc + v.stock, 0); %>
+                <% if (totalStock > 0) { %>
+                    <p class="in-stock">In Stock</p>
+                <% } else { %>
+                    <p class="out-of-stock-text">Out of Stock</p>
+                <% } %>
+    
+                <!-- Size and Color Selection -->
+                <div class="sizes">
+                    <label>Size:</label>
+                    <select id="size-dropdown" class="size-dropdown" onchange="updateColorOptions(this)">
+                        <option value="">Select Size</option>
+                        <% let uniqueSizes = [...new Set(product.variants.map(v => v.size))]; %>
+                        <% uniqueSizes.forEach(size => { %>
+                            <option value="<%= size %>"><%= size %></option>
+                        <% }) %>
+                    </select>
+                    <span class="size-chart-text" onclick="openFullscreenSizeChart()">Size Chart</span>
+                    <!-- Fullscreen Modal for Size Chart -->
+                    <div id="sizeChartModal" class="modal hidden">
+                        <div class="modal-content">
+                            <span class="close-btn" onclick="closeFullscreenSizeChart()">&times;</span>
+                            <img id="sizeChartImg" src="/<%= product.sizeChart.replace(/\\/g, '/') %>" alt="Size Chart">
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="colors">
+                    <label>Color:</label>
+                    <select id="color-dropdown" class="color-dropdown" disabled>
+                        <option value="">Select Color</option>
+                    </select>
+                </div>
+    
+                <!-- Buttons -->
+                <div class="buttons">
+                    <button class="cart-btn" onclick="addToCart('<%= product._id %>')">Add to Cart</button>
+                    <button class="cart-btn wishlist-button" data-productid="<%= product._id %>"
+                    <% if (wishlistProductIds.includes(product._id.toString())) { %> 
+                        class="wishlisted" 
+                    <% } %> 
+                >
+                    <% if (wishlistProductIds.includes(product._id.toString())) { %> 
+                        Wishlisted 
+                    <% } else { %> 
+                        Add to Wishlist 
+                    <% } %> 
+                </button>
+                </div>
+    
+               
+<div class="coupon-container">
+    <p>Available Offers</p>
+    <div class="coupon-slider">
+        <% allCoupons.slice(0, 3).forEach(coupon => { %> <!-- Show first 3 coupons -->
+            <div class="coupon-box">
+                <p class="couponName"><strong><%= coupon.description %></strong></p>
+                <ul>
+                    <li ><strong class="couponList">Discount: </strong><span class="couponList"><%= coupon.discountValue %>% OFF</span></li>
+                   <li><strong  class="couponList">Code: </strong> <span class="couponCodeName"><%= coupon.code %></span></li>
+                </ul>
+                
+            </div>
+        <% }); %>
+
+        <% if (allCoupons.length > 3) { %> <!-- If there are more than 3 coupons -->
+            <span class="see-more-btn" onclick="toggleCoupons()">
+                +<%= allCoupons.length - 3 %> More
+            </span>
+        <% } %>
+
+        <!-- Hidden Coupons after 3 -->
+        <% allCoupons.slice(3).forEach(coupon => { %> 
+            <div class="coupon-box hidden">
+                <p class="couponName"><strong><%= coupon.description %></strong></p>
+                <ul>
+                    <li ><strong class="couponList">Discount: </strong><span class="couponList"><%= coupon.discountValue %>% OFF</span></li>
+                   <li><strong  class="couponList">Code: </strong> <span class="couponCodeName"><%= coupon.code %></span></li>
+                </ul>
+                
+            </div>
+        <% }); %>
+        <button class="see-less-btn hidden" onclick="toggleCoupons()">Show less</button>
+
+    </div>
+</div>
+ 
+                <!-- Accordion -->
+                <div class="accordion">
+                    <h3 onclick="toggleAccordion('details')">Product Details</h3>
+                    <p id="details"><%= product.productDetails %></p>
+    
+                    <h3 onclick="toggleAccordion('seller')">Seller Details</h3>
+                    <p id="seller"><%= product.sellerDetails %></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+  <div class="container mt-5 ">
+    <div class="reviewBox p-4 border rounded reviewContainer">
+        <h4 class="text-center">Reviews and Ratings</h4>
+
+        <div class="row mt-4">
+            <!-- Left Side - Star Rating + Bar Graph -->
+            <div class="col-md-5">
+                <h6>Rate This Product</h6>
+                
+                <div class="stars">
+                    <input type="radio" name="rating" value="1" id="star1" <%= userRating == 1 ? "checked" : "" %> ><label for="star1">★</label>
+                    <input type="radio" name="rating" value="2" id="star2" <%= userRating == 2 ? "checked" : "" %> ><label for="star2">★</label>
+                    <input type="radio" name="rating" value="3" id="star3" <%= userRating == 3 ? "checked" : "" %> ><label for="star3">★</label>
+                    <input type="radio" name="rating" value="4" id="star4" <%= userRating == 4 ? "checked" : "" %> ><label for="star4">★</label>
+                    <input type="radio" name="rating" value="5" id="star5" <%= userRating == 5 ? "checked" : "" %> ><label for="star5">★</label>
+                </div>
+
+
+            
+                <button id="submitReviewBtn" class="btn btn-primary mt-2">Submit Review</button>
+                <p id="loginMessage" style="color: red; display: none;">Please login to rate.</p>
+            
+                <div class="average-rating">
+                    <h2><%= averageRating %></h2>
+                    <p><%= totalRatings %> Verified User</p>
+                </div>
+                
+                <div class="rating-bars">
+                    <% [5, 4, 3, 2, 1].forEach(star => { %>
+                        <div class="rating-row">
+                            <span><%= star %> ★</span>
+                            <div class="rating-bar">
+                                <div class="filled" style="width: <%= totalRatings ? (ratingCounts[star] / totalRatings) * 100 : 0 %>%"></div>
+                            </div>
+                            <span>(<%= ratingCounts[star] %>)</span>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+            
+
+            <!-- Right Side - Review Form -->
+            <div class="col-md-7">
+                <h6>Add a Review</h6>
+                <textarea id="reviewText"  placeholder="Write your review here..."></textarea>
+                <input type="file" id="imageUpload" class=" mt-2">
+                <button class="submit-icon mt-2" id="submitReview">
+                  <i class="fas fa-paper-plane"></i>
+              </button>
+                <h5 class="mt-4">Reviews</h5>
+                <div id="reviewList"></div>
+            </div>
+      
+    </div>
+</div>
+
+</div>
+
+
+    <div class="you-may-also-like" id="related_products">
+        <h2 class="heading">You May Also Like</h2>
+        <div class="carousel-container">
+          <button class="home-arrowLeft" onclick="scrollCarousel(-1)">&#10094;</button>
+          <div class="product-carousel" id="relatedProducts">
+            <% randomProducts.forEach((product) => { %>
+              <a href="/product/<%= product._id %>" class="product-link">
+                <div class="product-card productHomeCard">
+                  <img
+                    src="<%= '/uploads/' + product.imageUrls[0].replace(/^uploads\\/, '').replace(/\\/g, '/').replace(/ /g, '%20') %>"
+                    alt="<%= product.productName %>">
+    
+                  <% if (limitedOfferProductIds.includes(product._id.toString())) { %>
+                    <p class="limited-time-deal">⏳Limited Time Deal</p>
+                    <% } %>
+                      <p class="productNames">
+                        <%= product.productName %>
+                      </p>
+                      <p class="productHomeDiscount">
+                        <%= product.finalDiscount %>% OFF
+                      </p>
+                      <div class="priceSection">
+                        <span class="productHomeDiscountPrice">₹<%= product.discountedPrice %></span>
+                        <span class="productHomePrice">₹<%= product.price %></span>
+                      </div>
+                </div>
+              </a>
+              <% }) %>
+          </div>
+          <button class="home-arrowRight" onclick="scrollCarousel(1)">&#10095;</button>
+        </div>
+      </div>
+
+    
+    <% if (messages.success) { %>
+      <div id="flashMessage" class="custom-flash">
+          <i class="bi bi-info-circle"></i>
+          <%= messages.success %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+  <% } %>
+  <% if (messages.error) { %>
+      <div id="flashMessage" class="custom-flash">
+          <i class="bi bi-info-circle"></i>
+          <%= messages.error %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+  <% } %>
+
+
+  <footer class="footer-section">
+    <div class="footer-wrapper">
+  
+      <!-- Footer Top -->
+      <div class="footer-top">
+        <div class="container">
+          <div class="row">
+            
+            <!-- Information -->
+            <div class="col-lg-3 col-md-6 col-sm-12 footer-widget">
+              <h5 class="title">INFORMATION</h5>
+              <ul class="footer-nav">
+                <li><a href="/myorder">Delivery Information</a></li>
+                <li><a href="/contact-us">Contact</a></li>
+                <li><a href="/myorder">Returns</a></li>
+              </ul>
+            </div>
+  
+            <!-- My Account -->
+            <div class="col-lg-3 col-md-6 col-sm-12 footer-widget">
+              <h5 class="title">MY ACCOUNT</h5>
+              <ul class="footer-nav">
+                <li><a href="/userAc">My Account</a></li>
+                <li><a href="/wishlist">Wishlist</a></li>
+                <li><a href="/myorder">Order History</a></li>
+              </ul>
+            </div>
+  
+            <!-- Categories -->
+            <div class="col-lg-3 col-md-6 col-sm-12 footer-widget">
+              <h5 class="title">CATEGORIES</h5>
+              <ul class="footer-nav">
+                <% categories.forEach(category => { %>
+                  <li>
+                    <a href="/product/category/<%= category._id %>?category=<%= category._id %>">
+                      <%= category.name %>
+                    </a>
+                  </li>
+                <% }); %>
+              </ul>
+            </div>
+  
+            <!-- About Us -->
+            <div class="col-lg-3 col-md-6 col-sm-12 footer-widget">
+              <h5 class="title">ABOUT US</h5>
+              <p>We are a team of entrepreneurs creating high-quality products.</p>
+              <address>
+                <p>📍 Wardrobe Clothing Centre, Kochi</p>
+                <p>📧 wardrobeecom77@gmail.com</p>
+              </address>
+            </div>
+  
+          </div>
+        </div>
+      </div>
+  
+      <!-- Social Media -->
+      <div class="footer-center">
+        <div class="container text-center">
+          <h4 class="title">DON'T MISS OUT ON THE LATEST</h4>
+          <h4 class="title">FOLLOW US</h4>
+          <ul class="footer-social">
+            <li><a href="#"><i class="fa fa-facebook"></i></a></li>
+            <li><a href="#"><i class="fa fa-twitter"></i></a></li>
+            <li><a href="#"><i class="fa fa-instagram"></i></a></li>
+            <li><a href="#"><i class="fa fa-linkedin"></i></a></li>
+          </ul>
+        </div>
+      </div>
+  
+      <!-- Footer Bottom -->
+      <div class="footer-bottom">
+        <div class="container text-center">
+          <p>&copy; 2024 <a href="/product/home">WARDROBE</a>. All rights reserved.</p>
+        </div>
+      </div>
+  
+    </div> 
+  <script>
+    let currentImageIndex = 0;
+
+function changeImage(direction) {
+const images = document.querySelectorAll('.thumbnail');
+const totalImages = images.length;
+
+// Calculate the new image index
+currentImageIndex = (currentImageIndex + direction + totalImages) % totalImages;
+
+// Update the main image source
+const mainImage = document.getElementById('zoom-img');
+mainImage.src = images[currentImageIndex].src;
+}
+
+function changeImageByThumbnail(thumbnail, index) {
+const mainImage = document.getElementById('zoom-img');
+mainImage.src = thumbnail.src;
+currentImageIndex = index;
+}
+// Function to update color options based on selected size
+function updateColorOptions(sizeDropdown) {
+const size = sizeDropdown.value;
+const colorDropdown = document.getElementById('color-dropdown');
+
+// Disable color dropdown initially
+colorDropdown.disabled = true;
+colorDropdown.innerHTML = '<option value="">Select Color</option>';
+
+if (size) {
+    const product = <%- JSON.stringify(product) %>;
+    // Get available colors for the selected size
+    const availableColors = [];
+    product.variants.forEach(variant => {
+        if (variant.size === size && !availableColors.includes(variant.color)) {
+            availableColors.push(variant.color);
+        }
+    });
+
+    // Enable the color dropdown and populate it with available colors
+    if (availableColors.length > 0) {
+        colorDropdown.disabled = false;
+        availableColors.forEach(color => {
+            const option = document.createElement('option');
+            option.value = color;
+            option.textContent = color;
+            colorDropdown.appendChild(option);
+        });
+    }
+}
+}
+
+// Initial population of size and color dropdown
+document.addEventListener('DOMContentLoaded', () => {
+const sizeDropdown = document.getElementById('size-dropdown');
+updateColorOptions(sizeDropdown); // Ensure color dropdown is updated on page load
+});
+let isZoomed = false;
+
+function openFullscreen() {
+let img = document.getElementById("zoom-img"); // Get the clicked image
+let fullscreenImg = document.getElementById("fullscreen-img");
+let fullscreenView = document.getElementById("fullscreen-view");
+
+fullscreenImg.src = img.src; // Set fullscreen image source
+fullscreenView.style.display = "flex"; // Show fullscreen mode
+document.body.style.overflow = "hidden"; // Prevent background scrolling
+isZoomed = false;
+}
+
+function closeFullscreen() {
+let fullscreenView = document.getElementById("fullscreen-view");
+
+fullscreenView.style.display = "none"; // Hide fullscreen mode
+document.body.style.overflow = "auto"; // Enable background scrolling
+}
+function zoomImage(event) {
+let img = document.getElementById("fullscreen-img");
+let rect = img.getBoundingClientRect();
+
+let x = (event.clientX - rect.left) / rect.width * 100;
+let y = (event.clientY - rect.top) / rect.height * 100;
+
+let zoomLevel = isZoomed ? 1 : 2; // Increase zoom on hover
+
+img.style.transformOrigin = `center ${y}%`;
+img.style.transform = `scale(${zoomLevel})`;
+}
+
+function toggleZoom() {
+isZoomed = !isZoomed;
+}
+
+
+
+function toggleAccordion(id) {
+let content = document.getElementById(id);
+
+// Toggle the active class to show/hide content
+content.classList.toggle("active");
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+const slider = document.querySelector(".coupon-slider");
+const leftBtn = document.querySelector(".scroll-btn.left");
+const rightBtn = document.querySelector(".scroll-btn.right");
+
+rightBtn.addEventListener("click", () => {
+    slider.scrollBy({ left: 250, behavior: "smooth" });
+});
+
+leftBtn.addEventListener("click", () => {
+    slider.scrollBy({ left: -250, behavior: "smooth" });
+});
+});
+
+
+let allCouponsVisible = false; // Track whether all coupons are visible
+
+function toggleCoupons() {
+const hiddenCoupons = document.querySelectorAll('.coupon-box.hidden');
+const seeMoreButton = document.querySelector('.see-more-btn');
+const seeLessButton = document.querySelector('.see-less-btn');
+
+if (allCouponsVisible) {
+    // If all coupons are visible, hide the ones after the first 3
+    hiddenCoupons.forEach(coupon => {
+        coupon.style.display = 'none';
+    });
+    seeMoreButton.style.display = 'block'; 
+    seeLessButton.style.display='none'// Change button text back to "+1 More"
+} else {
+    // If all coupons are hidden, display the remaining coupons
+    hiddenCoupons.forEach(coupon => {
+        coupon.style.display = 'block';
+    });
+    seeMoreButton.style.display = 'none'; 
+    seeLessButton.style.display='block'
+}
+
+// Toggle the visibility state
+allCouponsVisible = !allCouponsVisible;
+}
+document.addEventListener("DOMContentLoaded", function () {
+const stars = document.querySelectorAll(".stars input");
+const labels = document.querySelectorAll(".stars label");
+let selectedRating = 0;
+const productId = window.location.pathname.split("/")[2]; // Extract productId dynamically
+
+stars.forEach(star => {
+    star.addEventListener("change", function () {
+        updateStarColors();
+    });
+});
+
+function updateStarColors() {
+    let selectedValue = document.querySelector(".stars input:checked")?.value || 0;
+
+    stars.forEach(star => {
+        let label = star.nextElementSibling;
+        if (star.value <= selectedValue) {
+            label.style.color = "gold";
+        } else {
+            label.style.color = "gray";
+        }
+    });
+}
+
+// Call this on page load to ensure stars are set correctly
+updateStarColors();
+
+stars.forEach((star, index) => {
+    star.addEventListener("click", function () {
+        selectedRating = this.value;
+        labels.forEach(label => (label.style.color = "black"));
+        for (let i = 0; i <= index; i++) {
+            labels[i].style.color = "gold";
+        }
+    });
+});
+
+document.getElementById("submitReviewBtn").addEventListener("click", async function () {
+    if (!selectedRating) {
+        Swal.fire({
+        icon: "warning",
+        title: "Oops...",
+        text: "Please select a rating before submitting!",
+    });
+        return;
+    }
+
+    try {
+        const response = await fetch("/product/submit-review", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productId, rating: selectedRating })
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            Swal.fire({
+            icon: "success",
+            title: "Thank you!",
+            text: "Your review has been submitted successfully!",
+            confirmButtonColor: "#3085d6",
+        }).then(() => {
+            updateChart(); // Update the chart after confirmation
+        });
+    } else {
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: result.message,
+        });
+    }
+} catch (error) {
+    console.error("Error submitting review:", error);
+    Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Something went wrong! Please try again later.",
+    });
+}
+});
+});
+function openFullscreenSizeChart() {
+document.getElementById("sizeChartModal").style.display = "flex";
+}
+
+function closeFullscreenSizeChart() {
+document.getElementById("sizeChartModal").style.display = "none";
+}
+
+// Close when clicking outside the modal content
+window.onclick = function(event) {
+let modal = document.getElementById("sizeChartModal");
+if (event.target === modal) {
+    closeFullscreen();
+}
+};
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+    document.addEventListener("DOMContentLoaded", function () {
+        let isProductDeleted = <%= isProductDeleted ? 'true' : 'false' %>;
+
+        if (isProductDeleted) {
+            document.querySelector(".productDetailContainer").classList.add("blurred");
+            document.querySelector(".reviewContainer").classList.add("blurred");
+            
+
+            // Create an overlay message container
+            let messageDiv = document.createElement("div");
+            messageDiv.classList.add("unavailable-message");
+            messageDiv.innerText = "Product Unavailable";
+
+            // Append message to the body so it remains clear
+            document.body.appendChild(messageDiv);
+            window.addEventListener("scroll", function () {
+                if (window.scrollY > 400) { 
+                    messageDiv.classList.add("hidden"); // Hide message when scrolled down
+                } else {
+                    messageDiv.classList.remove("hidden"); // Show message when back to top
+                }
+            });
+        }
+    });
+    function addToCart(productid) {
+        const size = document.getElementById("size-dropdown").value;
+        const color = document.getElementById("color-dropdown").value;
+        const quantity = 1; // You can allow users to choose quantity
+        var isLoggedIn = <%= isLoggedIn %>;
+        if(!isLoggedIn){
+            Swal.fire("Error", "Please login first to add products to cart!", "error");
+            return;
+        }
+        if (!size || !color) {
+            Swal.fire("Error", "Please choose size and color before adding to cart!", "error");
+            return;
+        }
+
+        fetch("/product/add-to-cart", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ productid, size, color, quantity })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "exists") {
+        Swal.fire({
+            icon: "warning",
+            title: "Already in Cart",
+            text: "This product is already in your cart! Quantity updated.",
+            confirmButtonText: "OK"
+        });
+    } 
+    if (data.status === "out_of_stock") {
+                Swal.fire({
+                    title: "Out of Stock!",
+                    text: "This combination is out of stock. Choose another size or color.",
+                    icon: "error",
+                    confirmButtonText: "OK"
+                });
+            } else if (data.status === "exists") {
+                Swal.fire({
+                    title: "Already in Cart!",
+                    text: "Quantity updated in your cart.",
+                    icon: "info",
+                    confirmButtonText: "OK"
+                });
+            } else if (data.status === "success") {
+                Swal.fire({
+                    title: "Added to Cart!",
+                    text: "Would you like to view your cart?",
+                    icon: "success",
+                    showCancelButton: true,
+                    confirmButtonText: "View Cart",
+                    cancelButtonText: "Keep Shopping"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = "/product/cartpage"; 
+                    }
+                    else{
+                        window.location.reload();
+                    }
+                });
+            } else {
+                Swal.fire("Error!", "Something went wrong. Please try again.", "error");
+            }
+        })
+        .catch(error => console.error("Error:", error));
+    }
+
+    document.querySelectorAll('.wishlist-button').forEach(button => {
+    button.addEventListener('click', function () {
+        const productId = this.getAttribute('data-productid'); // Get product ID from button
+        var isLoggedIn = <%= isLoggedIn %>;
+        if(!isLoggedIn){
+            Swal.fire("Error", "Please login first to add products to cart!", "error");
+            return;
+        }
+        fetch('/product/addToWishlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productid: productId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "info") {
+                // Product is already in wishlist
+                Swal.fire({
+                    title: "Already in Wishlist!",
+                    text: "This product is already in your wishlist.",
+                    icon: "info",
+                    confirmButtonText: "OK"
+                });
+            } else if (data.status === "success") {
+                // Product added successfully
+                Swal.fire({
+                    title: "Added to Wishlist!",
+                    text: "Do you want to view your wishlist?",
+                    icon: "success",
+                    showCancelButton: true,
+                    confirmButtonText: "View Wishlist",
+                    cancelButtonText: "Keep Shopping"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.reload(); 
+                    }
+                    else{
+                        window.location.reload();
+                    }
+                });
+            } else {
+                Swal.fire("Error!", "Something went wrong. Please try again.", "error");
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            Swal.fire("Error!", "Failed to add product to wishlist.", "error");
+        });
+    });
+});
+</script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/main.js"></script>
+</body>
+</html>
