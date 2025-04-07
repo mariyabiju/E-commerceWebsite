@@ -1,12 +1,27 @@
 const Category = require("../models/Category");
 const Product = require("../models/Product");
+let Order=require("../models/Order");
 
 // Get all categories
 exports.getAllCategories = async (req, res) => {
     try {
         const categories = await Category.find();
         const categoryData = [];
-
+       
+        const categoryMap= new Map();
+        const orders= await Order.find({status:{$ne:"Cancelled"}});
+        for(let order of orders){
+             for(let item of order.products){
+                const {isDelete,return_cancel,productid}=item;
+                if(!isDelete||!return_cancel.cancelRequested){
+                    const product=await Product.findById(productid);
+                    if(product&&product.category){
+                        const category= product.category.toString();
+                        categoryMap.set(category,(categoryMap.get(category)||0)+1);
+                    }
+                }
+             }
+        }
         for (let category of categories) {
             let categoryObj = category.toObject();
             const products = await Product.find({ category: category._id });
@@ -14,11 +29,11 @@ exports.getAllCategories = async (req, res) => {
             const totalStock = products.reduce((sum, product) => {
                 return sum + product.variants.reduce((variantSum, variant) => variantSum + variant.stock, 0);
             }, 0);
-
-            const totalSales = products.reduce((sum, product) => sum + (product.sold || 0), 0);
+            
+            const totalSales = categoryMap.get(category._id.toString()||0);
 
             await Category.findByIdAndUpdate(category._id, { totalStock, totalSales });
-
+            
             categoryObj.totalStock = totalStock;
             categoryObj.totalSales = totalSales;
 

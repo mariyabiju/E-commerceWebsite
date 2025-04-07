@@ -18,7 +18,12 @@ const mongoose = require("mongoose");
 exports.getHomeData = async (req, res) => {
     try {
         // Fetch categories and products
-        const products = await Product.find().sort({ createdAt: -1 }).limit(9);  // Fetch latest 9 products
+        const products = await Product.find({ isDeleted: false }) // Filter out soft-deleted products
+    .populate({
+        path: 'category',
+        match: { isDeleted: false } 
+    }).sort({ createdAt: -1 }).limit(9);
+    const filteredproducts = products.filter(product => product.category);
         const categories = await Category.find({ isDeleted: false }); // Fetch active categories
         const banners = await Banner.find().populate('offerId'); // Fetch all banners
         // Check if the user has placed an order
@@ -65,7 +70,7 @@ exports.getHomeData = async (req, res) => {
         const successMsg = req.session.successMsg;
         delete req.session.successMsg; // Remove it after displaying
        // Pass hotDeals and the limitedOfferProductIds array to the EJS template
-       res.render("home_user", { products,  showNewUserCoupon, hotDeals, categories, banners, limitedOfferProductIds ,successMsg});
+       res.render("home_user", { products:filteredproducts,  showNewUserCoupon, hotDeals, categories, banners, limitedOfferProductIds ,successMsg});
 
 
     } catch (error) {
@@ -282,17 +287,25 @@ if (price.length > 0) {
 
 
         // Get the filtered products with pagination
-        const filteredProducts = await Product.find(filterQuery)
+        const filteredProducts = (await Product.find(filterQuery).populate({
+            path:'category',
+            match:{isDeleted:false}
+        })
             .skip(skip)
             .limit(limit)
-            .sort(sortQuery);
+            .sort(sortQuery)).filter(filteredProduct=>filteredProduct.category)
 
         // Get the total count of matching products
         const totalProducts = await Product.countDocuments(filterQuery);
 
         // Fetch all categories and unique colors for filtering
-        const categories = await Category.find();
-        const allProducts = await Product.find();
+        const categories = await Category.find({isDeleted:false});
+        const allProducts = (await Product.find({ isDeleted: false })
+        .populate({
+            path: 'category',
+            match: { isDeleted: false },
+        }))
+        .filter(product => product.category);
         let allColors = [];
 
         allProducts.forEach(product => {
@@ -501,7 +514,12 @@ exports.bannerProductFilter = async (req, res) => {
         const colors = await Product.distinct("color"); 
 
         const brandName = req.params.brandName ? decodeURIComponent(req.params.brandName) : null;
+        let wishlistProductIds = []; // Array to store wishlist product IDs
 
+        if (req.session.userId) {
+            const userWishlist = await Wishlist.findOne({ userId: req.session.userId });
+            wishlistProductIds = userWishlist ? userWishlist.items.map(item => item.productid.toString()) : [];
+        }
         // Ensure categoryIds is always passed to the view
         const categoryIds = [];
 
@@ -513,6 +531,7 @@ exports.bannerProductFilter = async (req, res) => {
             price: [],
             size: [],
             colors,
+            wishlistProductIds,
             brandName,
             offerId: offer._id,
             offerName: offer.offerName,

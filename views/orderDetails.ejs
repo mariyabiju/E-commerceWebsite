@@ -42,7 +42,7 @@
                 <div class="order-container mt-4">
                     <h6>Order #<%= allOrders.orderNumber || "N/A" %></h6>
                     
-                   <% if(allOrders.status === "Delivered"||(allOrders.status==="Shipped"||allOrders.status==='Pending'&& allOrders.paymentDetails.method!='COD')&& allOrders.flag== 'false'){%>
+                    <% if ((allOrders.status === "Delivered" || (allOrders.status === "Shipped" || allOrders.status === "Pending" && allOrders.paymentDetails.method != 'COD')) && allOrders.flag == 'false') { %>
                     <a href="/product/invoice/<%= allOrders._id %>" class="btn btn-primary">
                         View Invoice
                     </a>

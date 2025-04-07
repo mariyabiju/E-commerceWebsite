@@ -3,13 +3,3 @@ node_modules/
 *.lnk
 *.url
 *.exe
-
-
-# Ignore specific JavaScript files (add files you don't want)
-categorystock.js
-generateQr.js
-hash.js
-productupdate.js
-resize.js
-update.js
-razorpay_qr.png
