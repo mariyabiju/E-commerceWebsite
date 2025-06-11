@@ -52,12 +52,16 @@ router.get("/return/returnsPage",cartController.returnPage);
 router.get("/wishlist", cartController.getWishlist);
 router.post("/addToWishlist", cartController.addToWishlist);
 router.post("/wishlist/updateproducts", productController.productToWishlist);
+router.delete("/removewishlist", productController.removeFromWishlist);
+
 
 router.get('/search', productController.getProductsFilter);
 router.get('/filter', productController.getProductsFilter); 
 router.get('/:id', productController.productDetails); 
 
+const uploadMiddleware = require("../middleware/uploadMiddleware");
 
+router.post("/submitreview", uploadMiddleware.uploadreview, reviewController.reviewsubmission);
 
 router.post("/submit-review", productController. submitReview);
 

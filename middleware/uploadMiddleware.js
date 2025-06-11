@@ -21,6 +21,7 @@ const upload = multer({
 }).fields([
     { name: "imageUrls", maxCount: 5 },
     { name: "sizeChart", maxCount: 1 },
+    { name: "reviewImages", maxCount: 3 },
 ]);
 
 const processImages = async (req, res, next) => {
@@ -32,6 +33,20 @@ const processImages = async (req, res, next) => {
         res.status(500).send("Image processing failed");
     }
 };
+const storagereview = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, "uploads/");
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname));
+    },
+});
 
+const uploadreview = multer({
+    storage: storagereview,
+    limits: { fileSize: 10 * 1024 * 1024 },
+}).fields([
+    { name: "reviewImages", maxCount: 3 },
+]);
 // Export both middleware functions
-module.exports = { upload, processImages };
+module.exports = { upload, processImages, uploadreview };

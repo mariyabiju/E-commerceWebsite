@@ -941,7 +941,9 @@ background-color:  #fdf2f2; /* Optional: Facebook blue background */
   border-radius: 5px;
   border: none;
 }
-
+#filtersContainer{
+ z-index: 1050;
+}
 
 /* Product Grid */
 .products {
@@ -1430,7 +1432,7 @@ select {
   gap: 10px;
 }
 
-.cart-btn, .order-btn {
+.wishlistbutton, .order-btn {
   background-color: red;
   color: white;
   padding: 10px 15px;

@@ -47,8 +47,10 @@
                                         <% } else { %>
                                             <p class="product-price  productPrice">Rs. <%= product.price %></p>
                                         <% } %>
-                                        <button class="cart-btn" onclick="showSizeColorAlert('<%= product._id %>')">Add to Cart</button>
-        
+                                        <div>
+                                            <button class="cart-btn wishlistbutton me-2" style="margin-bottom: 8px;" onclick="showSizeColorAlert('<%= product._id %>')">Add to Cart</button>
+                                            <button class="wishlistbutton remove-btn" onclick="removeFromWishlist('<%= product._id %>')">Remove from Wishlist</button>
+                                          </div>
                                         <% if (product.variants.some(v => v.stock === 0)) { %>
                                             <p class="out-of-stock-text">Out of Stock.Check for another size and color in product details</p>
                                         <% } %>
@@ -104,4 +106,33 @@
             }
         });
     }
+
+    function removeFromWishlist(productId) {
+  fetch('/product/removewishlist', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ productId })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Removed!',
+        text: data.message,
+      }).then(() => {
+        location.reload();
+      });
+    } else {
+      Swal.fire('Error', data.message || 'Failed to remove from wishlist.', 'error');
+    }
+  })
+  .catch(error => {
+    console.error("Error:", error);
+    Swal.fire('Error', 'Something went wrong.', 'error');
+  });
+}
+
     </script>     

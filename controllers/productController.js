@@ -382,6 +382,32 @@ exports.productToWishlist = async (req, res) => {
     }
 };
 
+exports.removeFromWishlist = async (req, res) => {
+    try {
+      const userId = req.session.userId;
+      const { productId } = req.body;
+  
+      if (!userId) {
+        return res.status(401).json({ success: false, message: "Login required." });
+      }
+  
+      const wishlist = await Wishlist.findOne({ userId });
+  
+      if (!wishlist) {
+        return res.status(404).json({ success: false, message: "Wishlist not found." });
+      }
+  
+      wishlist.items = wishlist.items.filter(item => item.productid.toString() !== productId);
+  
+      await wishlist.save();
+  
+      return res.json({ success: true, message: "Product removed from wishlist." });
+    } catch (error) {
+      console.error("Error removing from wishlist:", error);
+      res.status(500).json({ success: false, message: "Server error." });
+    }
+  };
+  
 
 // Controller to fetch product details
 exports.productDetails = async (req, res) => {
@@ -394,7 +420,7 @@ exports.productDetails = async (req, res) => {
         const product = await Product.findById(productId).populate("category");
        
         // Fetch Ratings
-        const ratings = await Rating.find({ productId });
+        const ratings = await Rating.find({ productId }).populate('userId','fname');
 
         // Calculate Rating Breakdown
         let ratingCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
@@ -490,7 +516,7 @@ exports.productDetails = async (req, res) => {
               offer.filteredProducts.map(product => product._id.toString())
           );
   
-          res.render("productDetails", { product, hotDeals, limitedOfferProductIds,userRating , ratingCounts, averageRating, totalRatings,randomProducts, breadcrumbs , allCoupons, 
+          res.render("productDetails", { product, hotDeals,ratings, limitedOfferProductIds,userRating , ratingCounts, averageRating, totalRatings,randomProducts, breadcrumbs , allCoupons, 
             showNewUserCoupon, wishlistProductIds , isProductDeleted: product.isDeleted, isLoggedIn: req.session.userId ? true : false });
         
     } 

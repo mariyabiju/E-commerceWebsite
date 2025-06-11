@@ -30,22 +30,22 @@
                         <a href="#" class="nav-link-profile">Edit profile</a>
                     </li>
                     <li class="nav-item">
-                        <a href="/product/orders" class="nav-link-profile">Order history</a>
+                        <a  href="javascript:void(0);"  onclick=" checkOrder()" class="nav-link-profile">Order history</a>
                     </li>
                     <li class="nav-item">
-                        <a href="/refer" class="nav-link-profile">Refer and Earn</a>
+                        <a  href="javascript:void(0);"  onclick=" checkReferPg()" class="nav-link-profile">Refer and Earn</a>
                     </li>
                     <li class="nav-item">
-                        <a href="/wallet" class="nav-link-profile">Wallet</a>
+                        <a  href="javascript:void(0);"  onclick=" checkWallet()" class="nav-link-profile">Wallet</a>
                     </li>
                     <li class="nav-item">
-                        <a href="/product/return/returnsPage" class="nav-link-profile">Return or Exchange</a>
+                        <a  href="javascript:void(0);"  onclick=" checkOrder()" class="nav-link-profile">Return or Exchange</a>
                     </li>
                     <li class="nav-item">
                         <a href="/contact" class="nav-link-profile">Contact us</a>
                     </li>
                     <li class="nav-item">
-                        <a href="/logout" class="nav-link-profile">Log out</a>
+                        <a href="javascript:void(0);" onclick="confirmLogout()" class="nav-link-profile">Log out</a>
                     </li>
                     <li class="nav-item">
                         <a href="/delete-account" class="nav-link-profile">Delete account</a>
@@ -496,6 +496,178 @@ document.querySelectorAll('.nav-link-profile').forEach(item => {
     .catch(error => console.error("Error:", error));
 }
 
+function confirmLogout() {
+    Swal.fire({
+        title: "Are you sure?",
+        text: "You will be logged out!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Yes, Logout!"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            handleLogout();
+        }
+    });
+}
+
+// Logout Request
+function handleLogout() {
+    fetch("/logout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin"
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Clear session & local storage
+            sessionStorage.clear();
+            localStorage.clear();
+
+            // Redirect to normal home page
+            window.location.replace(data.redirect);
+
+            // Prevent going back after logout
+            setTimeout(() => {
+                window.history.replaceState(null, null, data.redirect);
+            }, 100);
+        } else {
+            Swal.fire("Error", "Logout failed!", "error");
+        }
+    })
+    .catch(error => {
+        console.error("Logout Error:", error);
+        Swal.fire("Error", "Something went wrong!", "error");
+    });
+}
+function handleProfileClick() {
+    // Check if user is logged in
+    var userLoggedIn = <%= user ? 'true' : 'false' %>;
+
+    if (userLoggedIn) {
+        // Redirect to profile page if logged in
+        window.location.href = "/profile";
+    } else {
+        // Show SweetAlert to prompt login
+        Swal.fire({
+            icon: 'warning',
+            title: 'Login Required',
+            text: 'You need to log in first to edit your profile.',
+            showCancelButton: true,
+            confirmButtonText: 'Login',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "/login"; // Redirect to login page
+            }
+        });
+    }
+}
+function checkCart() {
+    var userLoggedIn = <%= user ? 'true' : 'false' %>; // Read user status from backend
+
+    if (userLoggedIn) {
+        window.location.href = "/product/cartpage"; // Redirect if logged in
+    } else {
+        Swal.fire({
+            icon: "warning",
+            title: "Login Required",
+            text: "You need to log in first to view your cart.",
+            showCancelButton: true,
+            confirmButtonText: "Login",
+            cancelButtonText: "Cancel"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "/login"; // Redirect to login if confirmed
+            }
+        });
+    }
+}
+function checkOrder() {
+    var userLoggedIn = <%= user ? 'true' : 'false' %>; // Read user status from backend
+
+    if (userLoggedIn) {
+        window.location.href = "/product/orders"; // Redirect if logged in
+    } else {
+        Swal.fire({
+            icon: "warning",
+            title: "Login Required",
+            text: "You need to log in first to view your order history.",
+            showCancelButton: true,
+            confirmButtonText: "Login",
+            cancelButtonText: "Cancel"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "/login"; // Redirect to login if confirmed
+            }
+        });
+    }
+}
+function checkWishlist() {
+    var userLoggedIn = <%= user ? 'true' : 'false' %>; // Read user status from backend
+
+    if (userLoggedIn) {
+        window.location.href = "/product/wishlist"; // Redirect if logged in
+    } else {
+        Swal.fire({
+            icon: "warning",
+            title: "Login Required",
+            text: "You need to log in first to view your wishlist.",
+            showCancelButton: true,
+            confirmButtonText: "Login",
+            cancelButtonText: "Cancel"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "/login"; // Redirect to login if confirmed
+            }
+        });
+    }
+}
+
+function checkReferPg(){
+    var userLoggedIn = <%= user ? 'true' : 'false' %>; // Read user status from backend
+
+if (userLoggedIn) {
+    window.location.href = "/product/refer/referral"; // Redirect if logged in
+} else {
+    Swal.fire({
+        icon: "warning",
+        title: "Login Required",
+        text: "You need to log in first to use Refer and Earn.",
+        showCancelButton: true,
+        confirmButtonText: "Login",
+        cancelButtonText: "Cancel"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = "/login"; // Redirect to login if confirmed
+        }
+    });
+}
+
+}
+function checkWallet(){
+    var userLoggedIn = <%= user ? 'true' : 'false' %>; // Read user status from backend
+
+if (userLoggedIn) {
+    window.location.href = "/wallet"; // Redirect if logged in
+} else {
+    Swal.fire({
+        icon: "warning",
+        title: "Login Required",
+        text: "You need to log in first to use Refer and Earn.",
+        showCancelButton: true,
+        confirmButtonText: "Login",
+        cancelButtonText: "Cancel"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = "/login"; 
+        }
+    });
+}
+
+}
 
 </script>
 

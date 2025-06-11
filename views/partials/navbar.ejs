@@ -64,7 +64,7 @@
                         </a>
                     </li>
                       <li><a href="javascript:void(0);" onclick=" checkOrder()" class="dropdown-item p-2 profile-option">Orders</a></li>
-                      <li><a  href="javascript:void(0);"  onclick=" checkWallet()"class="dropdown-item p-2 profile-option">Wallet</a></li>
+                      <li><a  href="javascript:void(0);"  onclick=" checkWallet()" class="dropdown-item p-2 profile-option">Wallet</a></li>
                       <li><a  href="javascript:void(0);"  onclick=" checkReferPg()" class="dropdown-item p-2 profile-option">Refer and Earn</a></li>
                       <li><a href="/contact" class="dropdown-item p-2 profile-option">Contact Us</a></li>
                   <% } %>
@@ -117,17 +117,17 @@
 
       <!-- Menu Items -->
       <ul class="list-unstyled">
-          <li><a href="/profile" class="text-white text-decoration-none d-block py-2">Edit Profile</a></li>
-          <li><a href="/orders" class="text-white text-decoration-none d-block py-2">Orders</a></li>
-          <li><a href="/wallet" class="text-white text-decoration-none d-block py-2">Wallet</a></li>
+          <li><a href="javascript:void(0);" onclick="handleProfileClick()" class="text-white text-decoration-none d-block py-2">Edit Profile</a></li>
+          <li><a href="javascript:void(0);" onclick=" checkOrder()" class="text-white text-decoration-none d-block py-2">Orders</a></li>
+          <li><a  href="javascript:void(0);"  onclick=" checkWallet()" class="text-white text-decoration-none d-block py-2">Wallet</a></li>
           <li><a href="/contact" class="text-white text-decoration-none d-block py-2">Contact Us</a></li>
           <% if (user) { %>
               <li><a href="/logout" class="text-white text-decoration-none d-block py-2">Logout</a></li>
           <% } else { %>
               <li><a href="/login" class="text-white text-decoration-none d-block py-2">Login/Signup</a></li>
           <% } %>
-          <li><a href="#" class="text-white text-decoration-none d-block py-2">Wishlist</a></li>
-          <li><a href="#" class="text-white text-decoration-none d-block py-2">Cart</a></li>
+          <li><span onclick="checkWishlist()" class="text-white text-decoration-none d-block py-2">Wishlist</span></li>
+          <li><span href="#" onclick="checkCart()" class="text-white text-decoration-none d-block py-2">Cart</span></li>
       </ul>
   </div>
 </div>
