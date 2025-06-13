@@ -2947,4 +2947,10 @@ th {
           cursor: pointer;
           font-size: 13px; /* Adjust size if needed */
       }
-   
+      @media (max-width: 576px) {
+       .auth-buttons{
+          width: 60% !important;
+        }
+        
+      }
+      

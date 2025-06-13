@@ -29,9 +29,9 @@
         
     
       <div class="container productDetailContainer">
-        <div class="product-container productContainer">
+        <div class="product-container productContainer row">
             <!-- Left Section: Image Gallery -->
-            <div class="left">
+            <div class="left col-md-6">
                 <div class="main-image-container">
                     <!-- Left Arrow (Previous Image) -->
                     <button class="arrowMainImg left-arrow" onclick="changeImage(-1)">&#10094;</button>
@@ -68,7 +68,7 @@
             </div>
     
             <!-- Right Section: Product Details -->
-            <div class="right">
+            <div class="right col-md-6">
                 <p class="brand productBrandDetail"><%= product.brand %></p>
                 <h2 class="product-name productNameDetail"><%= product.productName %></h2>
     
