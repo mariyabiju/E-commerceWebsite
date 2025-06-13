@@ -126,8 +126,8 @@
     
                 <!-- Buttons -->
                 <div class="buttons">
-                    <button class="cart-btn" onclick="addToCart('<%= product._id %>')">Add to Cart</button>
-                    <button class="cart-btn wishlist-button" data-productid="<%= product._id %>"
+                    <button class="cart-btn btn btn-danger" onclick="addToCart('<%= product._id %>')">Add to Cart</button>
+                    <button class="cart-btn wishlist-button btn btn-danger" data-productid="<%= product._id %>"
                     <% if (wishlistProductIds.includes(product._id.toString())) { %> 
                         class="wishlisted" 
                     <% } %> 
